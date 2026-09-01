@@ -5,16 +5,20 @@ Proposal (Member 1: Annandita Padhi, 23UG010928; Member 2: Subrata Dhibar,
 23UG010914; Supervisor: Dr. A.V.S. Pavan Kumar, per the signed Annexure-B;
 class teacher Ranjit Patnaik).
 
-## Where the codebase actually stands (as of Phase A completion)
+## Where the codebase actually stands (as of Phase B completion)
 
-Verified working end-to-end (registered users, took a live quiz, hit every
-endpoint, checked 375px mobile width):
+Verified working end-to-end (registered users, published and took a
+quiz-scoped and an open-practice quiz live, hit every endpoint, checked
+375px mobile width):
 
 - Auth: register/login for both roles, JWT, `/auth/me` — **done**
 - Question bank: teacher can add concept + difficulty tagged MCQs — **done**
+- Quiz entity (SoP US2): teacher publishes a quiz over a chosen concept
+  subset, student picks it (or falls back to open-subject practice),
+  attempts and history are labeled by quiz — **done**
 - BKT engine: 4-parameter Bayes update + learning transition — **done**
 - Adaptive selection: lowest-mastery concept, random-baseline mode, session
-  never repeats a concept — **done**
+  never repeats a concept, optionally scoped to a published quiz — **done**
 - Mastery map: per-concept chart + revision suggestions — **done**
 - Teacher class weak-concept analytics — **done**
 - Quiz history (supplementary, not one of the SoP's 8 core stories) — **done**
@@ -26,11 +30,6 @@ endpoint, checked 375px mobile width):
 
 ## Not built yet, required by the proposal's own scope
 
-- **No discrete Quiz entity.** SoP US2 is "teacher creates a quiz for a
-  subject and shares it with a class" — right now there's no quiz to create;
-  students just pull questions by subject. Needs a `Quiz` model (subject,
-  concept range, published/active flag, class/section) and a teacher
-  "create quiz" flow. See Phase B.
 - **Question bank is far short of scope.** Proposal scope says 8-12 concepts
   and 150+ questions for the pilot subject. Currently 6 concepts / 18
   questions. See Phase C.
@@ -42,21 +41,22 @@ endpoint, checked 375px mobile width):
 - **No hosted deployment.** Proposal mentions Render/Railway free tier.
   Currently local-only.
 
-## Phase B — Close US2: real Quiz entity
+## Phase B — Close US2: real Quiz entity — **done**
 
-1. Add a `Quiz` model: `id, subject, title, concept_ids (list), teacher_id,
-   is_active, created_at`.
-2. Teacher endpoints: `POST /quizzes` (create), `GET /quizzes?subject=`
-   (list).
-3. Student endpoint: `GET /quizzes/active?subject=`.
-4. `next-question`/`submit-answer` gain an optional `quiz_id` so attempts
-   group per quiz session, and Quiz History can show "Quiz: <title>"
-   instead of just a date bucket.
-5. Frontend: a "Create Quiz" form on the Teacher Dashboard, and Student Quiz
-   picks from active quizzes instead of hardcoding `SUBJECT`.
+Built: `Quiz` model (`id, subject, title, concept_ids_json, teacher_id,
+is_active, created_at`, with a `concept_ids` list property over the JSON
+column), `POST /quizzes` (teacher-only), `GET /quizzes?subject=`,
+`GET /quizzes/active?subject=`. `next-question`/`submit-answer` accept an
+optional `quiz_id` that restricts the concept pool and tags the resulting
+`Attempt`; Quiz History labels a session `"Quiz: <title>"` when one was
+used. Teacher Dashboard has a Create Quiz form (title + concept checklist);
+Student Quiz has a picker (teacher-published quiz, defaulting to the most
+recent, vs. open subject-wide practice) so the prior unrestricted flow
+still works when no quiz has been published.
 
-**Coordinate with Annandita before starting — it's her module (US1-3, US6)
-and a schema change.**
+Not done as part of Phase B (out of the plan's original scope, worth
+flagging for later): no class/section targeting on a quiz, no way to
+deactivate/edit a published quiz once created, no quiz detail/edit page.
 
 ## Phase C — Expand the question bank to scope
 
