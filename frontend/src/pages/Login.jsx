@@ -1,4 +1,4 @@
-// US-01, US-02: teacher/student register + login
+// SoP US3 (Annandita): student/teacher register + login
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, saveSession } from "../api/client";

@@ -4,15 +4,15 @@ from app.database import get_db
 from app import models, schemas, bkt
 import random
 
-router = APIRouter(prefix="/quiz", tags=["quiz"])  # US-05 through US-11
+router = APIRouter(prefix="/quiz", tags=["quiz"])  # SoP US4/US5 (Subrata); mastery-map endpoint below is backend support for SoP US6 (Annandita)
 
 
 @router.get("/next-question/{student_id}")
 def next_question(student_id: int, subject: str, mode: str = "adaptive",
                    exclude_concept_ids: str = "", db: Session = Depends(get_db)):
-    """US-07 (adaptive) / US-08 (random baseline). exclude_concept_ids is a
-    comma-separated list of concept ids already asked this session, so a
-    session never repeats a concept."""
+    """SoP US4 (Subrata): adaptive quiz delivery, plus the US8 random-baseline
+    mode. exclude_concept_ids is a comma-separated list of concept ids
+    already asked this session, so a session never repeats a concept."""
     concepts = db.query(models.Concept).filter_by(subject=subject).all()
     if not concepts:
         raise HTTPException(404, "No concepts for this subject")
@@ -43,7 +43,7 @@ def next_question(student_id: int, subject: str, mode: str = "adaptive",
 
 @router.post("/submit-answer")
 def submit_answer(payload: schemas.AnswerSubmit, db: Session = Depends(get_db)):
-    """US-06 (BKT update) + US-09 (instant feedback)."""
+    """SoP US5 (Subrata): BKT mastery update, fired on every answer, plus instant feedback."""
     question = db.query(models.Question).get(payload.question_id)
     if not question:
         raise HTTPException(404, "Question not found")
@@ -73,7 +73,9 @@ def submit_answer(payload: schemas.AnswerSubmit, db: Session = Depends(get_db)):
 
 @router.get("/mastery-map/{student_id}")
 def mastery_map(student_id: int, db: Session = Depends(get_db)):
-    """US-10: concept-wise mastery map + weak-concept flags for revision (US-11)."""
+    """SoP US6 (Annandita): concept-wise mastery map data + weak-concept
+    revision flags. Reassigned here from the adaptive-engine epic to match
+    the finalized SoP ownership — logic unchanged, ownership label only."""
     rows = db.query(models.Mastery).filter_by(student_id=student_id).all()
     return [{"concept_id": r.concept_id, "p_mastery": r.p_mastery,
              "needs_revision": r.p_mastery < 0.6} for r in rows]
@@ -81,7 +83,8 @@ def mastery_map(student_id: int, db: Session = Depends(get_db)):
 
 @router.get("/history/{student_id}")
 def quiz_history(student_id: int, db: Session = Depends(get_db)):
-    """US-04: student's past attempts, grouped by session/date, with score."""
+    """Quiz history — supplementary; not one of the SoP's 8 core stories.
+    Student's past attempts, grouped by session/date, with score."""
     attempts = (
         db.query(models.Attempt)
         .filter_by(student_id=student_id)

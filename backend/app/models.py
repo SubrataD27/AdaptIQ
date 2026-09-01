@@ -18,7 +18,7 @@ class Concept(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     subject = Column(String, nullable=False)
-    # BKT parameters (defaults per US-06)
+    # BKT parameters (SoP US5, Subrata: defaults for the mastery-update model)
     p_init = Column(Float, default=0.3)
     p_learn = Column(Float, default=0.2)
     p_slip = Column(Float, default=0.1)
@@ -40,7 +40,8 @@ class Question(Base):
 
 
 class Mastery(Base):
-    """Per-student, per-concept current BKT mastery probability. US-06."""
+    """Per-student, per-concept current BKT mastery probability.
+    Updated per SoP US5 (Subrata); displayed per SoP US6 (Annandita)."""
     __tablename__ = "mastery"
     id = Column(Integer, primary_key=True)
     student_id = Column(Integer, ForeignKey("users.id"))
@@ -50,13 +51,13 @@ class Mastery(Base):
 
 
 class Attempt(Base):
-    """Interaction log — every answered question. Powers US-07, US-13, US-14."""
+    """Interaction log — every answered question. Powers SoP US7/US8 (Subrata) analytics."""
     __tablename__ = "attempts"
     id = Column(Integer, primary_key=True)
     student_id = Column(Integer, ForeignKey("users.id"))
     question_id = Column(Integer, ForeignKey("questions.id"))
     concept_id = Column(Integer, ForeignKey("concepts.id"))
-    mode = Column(String, default="adaptive")  # "adaptive" | "random" — US-08
+    mode = Column(String, default="adaptive")  # "adaptive" | "random" — SoP US8
     is_correct = Column(Boolean)
     p_mastery_before = Column(Float)
     p_mastery_after = Column(Float)

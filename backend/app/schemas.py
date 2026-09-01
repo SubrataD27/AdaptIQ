@@ -54,4 +54,4 @@ class AnswerSubmit(BaseModel):
     student_id: int
     question_id: int
     selected_option: str
-    mode: str = "adaptive"  # US-08 random baseline toggle
+    mode: str = "adaptive"  # SoP US8 (Subrata): random baseline toggle

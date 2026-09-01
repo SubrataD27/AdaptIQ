@@ -4,12 +4,12 @@ from sqlalchemy import func
 from app.database import get_db
 from app import models
 
-router = APIRouter(prefix="/analytics", tags=["analytics"])  # US-12, US-14, US-15
+router = APIRouter(prefix="/analytics", tags=["analytics"])  # SoP US7/US8 (Subrata)
 
 
 @router.get("/class-weak-concepts")
 def class_weak_concepts(subject: str, db: Session = Depends(get_db)):
-    """US-12: class-level weak-concept report for teachers."""
+    """SoP US7 (Subrata): class-level weak-concept report for teachers."""
     rows = (
         db.query(models.Concept.id, models.Concept.name, func.avg(models.Mastery.p_mastery).label("avg_mastery"))
         .join(models.Mastery, models.Mastery.concept_id == models.Concept.id)
@@ -23,7 +23,10 @@ def class_weak_concepts(subject: str, db: Session = Depends(get_db)):
 
 @router.get("/adaptive-vs-random")
 def adaptive_vs_random(db: Session = Depends(get_db)):
-    """US-14: research comparison — mean questions-to-convergence + mean |error| per mode."""
+    """SoP US8 (Subrata): adaptive-vs-random research comparison. Currently
+    reports on real logged attempts only (avg mastery shift per answer) — no
+    simulated-learner questions-to-convergence/error metric yet, see
+    EXECUTION_PLAN.md Phase D."""
     results = {}
     for mode in ("adaptive", "random"):
         attempts = db.query(models.Attempt).filter_by(mode=mode).all()

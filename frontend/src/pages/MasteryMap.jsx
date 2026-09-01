@@ -1,6 +1,7 @@
-// US-10, US-11: concept-wise mastery map + revision suggestions
+// SoP US6 (Annandita): concept-wise mastery map + revision suggestions
+// (reassigned from the adaptive-engine epic to match the finalized SoP — no logic change)
 import { useEffect, useState } from "react";
-import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { api, getUser } from "../api/client";
 
 const SUBJECT = "Data Structures";
@@ -43,13 +44,15 @@ export default function MasteryMap() {
       )}
       {data.length > 0 && (
         <div className="card">
-          <BarChart width={640} height={320} data={data} margin={{ top: 10, right: 10, left: 0, bottom: 40 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="concept" angle={-20} textAnchor="end" interval={0} height={60} />
-            <YAxis domain={[0, 1]} />
-            <Tooltip formatter={(v) => `${Math.round(v * 100)}%`} />
-            <Bar dataKey="p_mastery" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-          </BarChart>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="concept" angle={-20} textAnchor="end" interval={0} height={60} />
+              <YAxis domain={[0, 1]} />
+              <Tooltip formatter={(v) => `${Math.round(v * 100)}%`} />
+              <Bar dataKey="p_mastery" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       )}
       {data.some((d) => d.needs_revision) && (

@@ -1,4 +1,6 @@
-// US-03, US-04, US-12, US-15: question bank + class analytics
+// Question bank form: SoP US1 (Annandita). Weak-concept report: SoP US7 (Subrata).
+// SoP US2 (Annandita, not built): this dashboard has no "create quiz" flow yet —
+// see EXECUTION_PLAN.md Phase B.
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 
@@ -54,17 +56,19 @@ export default function TeacherDashboard() {
         {weakConcepts.length === 0 ? (
           <p className="muted">No student attempts logged yet for {SUBJECT}.</p>
         ) : (
-          <table className="table">
-            <thead><tr><th>Concept</th><th>Avg. Mastery</th></tr></thead>
-            <tbody>
-              {weakConcepts.map((c) => (
-                <tr key={c.concept_id} className={c.avg_mastery < 0.6 ? "row-weak" : ""}>
-                  <td>{c.concept}</td>
-                  <td>{(c.avg_mastery * 100).toFixed(0)}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Concept</th><th>Avg. Mastery</th></tr></thead>
+              <tbody>
+                {weakConcepts.map((c) => (
+                  <tr key={c.concept_id} className={c.avg_mastery < 0.6 ? "row-weak" : ""}>
+                    <td>{c.concept}</td>
+                    <td>{(c.avg_mastery * 100).toFixed(0)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

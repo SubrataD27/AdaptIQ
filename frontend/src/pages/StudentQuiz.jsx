@@ -1,4 +1,4 @@
-// US-05, US-07, US-08, US-09: adaptive quiz UI with instant feedback
+// SoP US4 (Subrata): adaptive quiz UI, plus US8's random-mode toggle and instant per-answer feedback
 import { useState } from "react";
 import { api, getUser } from "../api/client";
 

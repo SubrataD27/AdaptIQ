@@ -4,7 +4,7 @@ from app.database import get_db
 from app import models, schemas, auth
 from app.deps import get_current_user
 
-router = APIRouter(prefix="/auth", tags=["auth"])  # US-01, US-02
+router = APIRouter(prefix="/auth", tags=["auth"])  # SoP US3 (Annandita): student/teacher registration + login
 
 
 @router.post("/register", response_model=schemas.AuthResponse)

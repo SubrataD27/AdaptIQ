@@ -1,4 +1,5 @@
-// US-04: quiz history for students, grouped by session/date
+// Quiz history for students, grouped by session/date.
+// Supplementary — not one of the SoP's 8 core stories.
 import { useEffect, useState } from "react";
 import { api, getUser } from "../api/client";
 
@@ -25,20 +26,22 @@ export default function QuizHistory() {
       {sessions.map((s) => (
         <div className="card" key={s.date}>
           <h3>{s.date} — {s.correct}/{s.total} correct</h3>
-          <table className="table">
-            <thead><tr><th>Concept</th><th>Mode</th><th>Result</th></tr></thead>
-            <tbody>
-              {s.attempts.map((a, i) => (
-                <tr key={i}>
-                  <td>{a.concept}</td>
-                  <td style={{ textTransform: "capitalize" }}>{a.mode}</td>
-                  <td className={a.is_correct ? "text-correct" : "text-incorrect"}>
-                    {a.is_correct ? "Correct" : "Incorrect"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Concept</th><th>Mode</th><th>Result</th></tr></thead>
+              <tbody>
+                {s.attempts.map((a, i) => (
+                  <tr key={i}>
+                    <td>{a.concept}</td>
+                    <td style={{ textTransform: "capitalize" }}>{a.mode}</td>
+                    <td className={a.is_correct ? "text-correct" : "text-incorrect"}>
+                      {a.is_correct ? "Correct" : "Incorrect"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ))}
     </div>
