@@ -5,11 +5,12 @@ Proposal (Member 1: Annandita Padhi, 23UG010928; Member 2: Subrata Dhibar,
 23UG010914; Supervisor: Dr. A.V.S. Pavan Kumar, per the signed Annexure-B;
 class teacher Ranjit Patnaik).
 
-## Where the codebase actually stands (as of Phase B completion)
+## Where the codebase actually stands (as of Phase D completion)
 
 Verified working end-to-end (registered users, published and took a
-quiz-scoped and an open-practice quiz live, hit every endpoint, checked
-375px mobile width):
+quiz-scoped and an open-practice quiz live, ran the simulation both
+standalone and via the API, hit every endpoint, checked 375px mobile
+width):
 
 - Auth: register/login for both roles, JWT, `/auth/me` — **done**
 - Question bank: teacher can add concept + difficulty tagged MCQs — **done**
@@ -22,7 +23,8 @@ quiz-scoped and an open-practice quiz live, hit every endpoint, checked
 - Mastery map: per-concept chart + revision suggestions — **done**
 - Teacher class weak-concept analytics — **done**
 - Quiz history (supplementary, not one of the SoP's 8 core stories) — **done**
-- Adaptive-vs-random comparison endpoint + Research page — **done**
+- Adaptive-vs-random comparison: live-attempt endpoint + simulated-learner
+  endpoint/script + pilot CSV export, all surfaced on the Research page — **done**
 - Demo data script (3 fake students, 8-10 answers each) + demo script — **done**
 - Ownership comments reconciled to the SoP's US1-US8 numbering — **done**
 - Mobile check at 375px: fixed navbar wrap and a hardcoded-width chart that
@@ -33,13 +35,12 @@ quiz-scoped and an open-practice quiz live, hit every endpoint, checked
 - **Question bank is far short of scope.** Proposal scope says 8-12 concepts
   and 150+ questions for the pilot subject. Currently 6 concepts / 18
   questions. See Phase C.
-- **No simulated-learner framework.** Objective #5 and the Research Plan's
-  simulation study doesn't exist. `/analytics/adaptive-vs-random` only
-  reports on real logged attempts, which is thin early on. See Phase D.
-- **No pilot-study tooling.** Nothing to run/export a real class-section
-  pilot session in bulk. See Phase D.
 - **No hosted deployment.** Proposal mentions Render/Railway free tier.
   Currently local-only.
+- **Adaptive selection strategy doesn't yet beat random on whole-profile
+  accuracy in simulation** — see Phase D's findings below. Worth exploring
+  as a follow-up (e.g. a coverage or uncertainty term in `select_next_concept`)
+  before leaning on it too hard in the written report.
 
 ## Phase B — Close US2: real Quiz entity — **done**
 
@@ -71,19 +72,32 @@ deactivate/edit a published quiz once created, no quiz detail/edit page.
 the BKT parameters), so flag drafts back to the team for review rather than
 bulk-generating and seeding directly.**
 
-## Phase D — Research component: simulation + pilot tooling
+## Phase D — Research component: simulation + pilot tooling — **done**
 
-1. `backend/app/simulation.py`: simulated students with a ground-truth
-   mastery vector per concept, run both adaptive and random selection over
-   many questions, track questions-to-convergence and mean absolute error
-   per mode, runnable standalone (`python -m app.simulation`).
-2. Pilot-study export: endpoint/script to export real quiz session data as
-   CSV for Pandas/Matplotlib analysis.
-3. Extend `/analytics/adaptive-vs-random` and the Research page to surface
-   simulation results alongside live-attempt numbers.
+Built: `backend/app/simulation.py` — simulated students with a randomized
+ground-truth mastery per concept, run through both adaptive and random
+selection using the live BKT engine and each concept's real parameters,
+tracking mean absolute error and questions-to-convergence (avg error <=0.1
+sustained for 3 questions) per mode. Runnable standalone
+(`python -m app.simulation [--students N] [--questions N] [--seed N]`) or
+via `GET /analytics/simulation`. `GET /analytics/export-attempts` streams
+every logged attempt as CSV for Pandas/Matplotlib. The Research page now
+shows live attempts, the simulation comparison, and a CSV download link.
 
-**Subrata's module (US7-8) — safe to build independently once Phase A is
-stable.**
+**Finding worth flagging to the team**: across multiple seeds/budgets, the
+simulation consistently shows *random* selection with a lower mean absolute
+error and better convergence than the current adaptive strategy. The
+`select_next_concept` logic always drills whichever concept has the
+current-lowest estimate; that concept's estimate gets refined fast, but
+concepts it never revisits stay stuck at `p_init`, which hurts *whole-profile*
+accuracy within a fixed question budget — even though it's still doing its
+job of targeting the weakest concept locally. This is a legitimate,
+reproducible result (not a simulation bug — see the Research page's
+in-app note), and squarely the kind of "discussion of limitations and
+future scope" objective #5 asks for. Options if the team wants adaptive to
+win this metric before the write-up: add a coverage/round-robin fallback
+so under-visited concepts get revisited periodically, or weight selection
+by estimate *uncertainty* rather than raw value.
 
 ## Reference: Technology stack check against proposal
 
@@ -94,4 +108,4 @@ stable.**
 | pyBKT + NumPy | Custom Python BKT formula | Proposal allows "pyBKT/custom" — valid, don't rebuild unless Phase D wants pyBKT's parameter-fitting |
 | PostgreSQL (SQLite dev) | SQLite only | Fine for now; switch the one `DATABASE_URL` line before any real pilot with concurrent users |
 | Chart.js/Recharts | Recharts | Matches |
-| Render/Railway hosted demo | Local only | Add before Phase D if a shareable link is wanted |
+| Render/Railway hosted demo | Local only | Add if a shareable link is wanted |

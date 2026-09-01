@@ -46,13 +46,19 @@ each next question to target the concept they're weakest on."
 - Point at the revision suggestions list for anything under 60% mastery
   (US6).
 
-## 5. Research angle (30 sec)
-- Navigate to **Research** (teacher nav). Show the adaptive vs. random
-  comparison table — attempts logged and average mastery shift per answer
-  for each mode.
-- Tie back to objective #5 in the SoP: this is the seed of the quantified
-  adaptive-vs-random comparison the research component will formalize with
-  simulated learners and a pilot study once Phase D lands (US8).
+## 5. Research angle (45 sec)
+- Navigate to **Research** (teacher nav). Show three things:
+  - **Live attempts** — real logged mastery shift per answer, per mode.
+  - **Simulated learners** — 30 simulated students with known ground-truth
+    mastery, run through both strategies via the exact same BKT engine
+    (SoP objective #5). Be upfront if asked: the current numbers show
+    random beating adaptive on whole-profile accuracy, and the page
+    explains why (adaptive drills one weak concept at a time and can
+    leave others unrefined) — that's a real, reproducible finding, not a
+    bug, and it's exactly the kind of limitations discussion objective #5
+    expects (US8).
+  - **Pilot-study export** — the CSV download button, tying to the SoP's
+    Research Plan methodology (Pandas/Matplotlib analysis).
 
 ## 6. Jira board (15 sec, optional)
 - Show the Sprint board with stories moving through columns as evidence of
