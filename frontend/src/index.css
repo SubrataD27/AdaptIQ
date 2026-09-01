@@ -248,6 +248,38 @@ input:focus, select:focus {
   color: var(--text-muted);
 }
 
+/* Quiz creation (teacher) */
+.concept-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 6px;
+}
+
+.concept-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+/* Quiz picker (student) */
+.quiz-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 16px;
+}
+
+.quiz-picker-option {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
 /* Quiz */
 .mode-toggle {
   display: flex;

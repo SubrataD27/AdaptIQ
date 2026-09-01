@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine, SessionLocal
-from app.routers import auth_router, questions_router, quiz_router, analytics_router, concepts_router
+from app.routers import auth_router, questions_router, quiz_router, analytics_router, concepts_router, quizzes_router
 from app import seed
 
 Base.metadata.create_all(bind=engine)
@@ -19,6 +19,7 @@ app.include_router(questions_router.router)
 app.include_router(quiz_router.router)
 app.include_router(analytics_router.router)
 app.include_router(concepts_router.router)
+app.include_router(quizzes_router.router)
 
 
 @app.on_event("startup")

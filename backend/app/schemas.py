@@ -39,6 +39,22 @@ class ConceptOut(BaseModel):
     subject: str
 
 
+class QuizCreate(BaseModel):
+    subject: str
+    title: str
+    concept_ids: list[int]
+
+
+class QuizOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    subject: str
+    title: str
+    concept_ids: list[int]
+    teacher_id: int
+    is_active: bool
+
+
 class QuestionCreate(BaseModel):
     concept_id: int
     text: str
@@ -55,3 +71,4 @@ class AnswerSubmit(BaseModel):
     question_id: int
     selected_option: str
     mode: str = "adaptive"  # SoP US8 (Subrata): random baseline toggle
+    quiz_id: int | None = None  # SoP US2: set when answering as part of a published quiz

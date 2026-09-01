@@ -1,6 +1,5 @@
 // Question bank form: SoP US1 (Annandita). Weak-concept report: SoP US7 (Subrata).
-// SoP US2 (Annandita, not built): this dashboard has no "create quiz" flow yet —
-// see EXECUTION_PLAN.md Phase B.
+// Create Quiz form: SoP US2 (Annandita).
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 
@@ -9,6 +8,7 @@ const EMPTY_FORM = {
   concept_id: "", text: "", option_a: "", option_b: "", option_c: "", option_d: "",
   correct_option: "a", difficulty: "medium",
 };
+const EMPTY_QUIZ_FORM = { title: "", concept_ids: [] };
 
 export default function TeacherDashboard() {
   const [weakConcepts, setWeakConcepts] = useState([]);
@@ -17,14 +17,26 @@ export default function TeacherDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const [quizzes, setQuizzes] = useState([]);
+  const [quizForm, setQuizForm] = useState(EMPTY_QUIZ_FORM);
+  const [quizError, setQuizError] = useState("");
+  const [quizSuccess, setQuizSuccess] = useState("");
+
   const loadWeakConcepts = () => {
     api.get("/analytics/class-weak-concepts", { params: { subject: SUBJECT } })
       .then((res) => setWeakConcepts(res.data))
       .catch(() => setError("Failed to load the class weak-concept report."));
   };
 
+  const loadQuizzes = () => {
+    api.get("/quizzes/", { params: { subject: SUBJECT } })
+      .then((res) => setQuizzes(res.data))
+      .catch(() => setQuizError("Failed to load quizzes."));
+  };
+
   useEffect(() => {
     loadWeakConcepts();
+    loadQuizzes();
     api.get("/concepts/", { params: { subject: SUBJECT } }).then((res) => {
       setConcepts(res.data);
       setForm((f) => ({ ...f, concept_id: res.data[0]?.id ?? "" }));
@@ -44,6 +56,29 @@ export default function TeacherDashboard() {
       loadWeakConcepts();
     } catch (err) {
       setError(err.response?.data?.detail || "Failed to add question.");
+    }
+  };
+
+  const toggleQuizConcept = (id) => {
+    setQuizForm((f) => ({
+      ...f,
+      concept_ids: f.concept_ids.includes(id)
+        ? f.concept_ids.filter((c) => c !== id)
+        : [...f.concept_ids, id],
+    }));
+  };
+
+  const submitQuiz = async (e) => {
+    e.preventDefault();
+    setQuizError("");
+    setQuizSuccess("");
+    try {
+      await api.post("/quizzes/", { subject: SUBJECT, title: quizForm.title, concept_ids: quizForm.concept_ids });
+      setQuizSuccess("Quiz published.");
+      setQuizForm(EMPTY_QUIZ_FORM);
+      loadQuizzes();
+    } catch (err) {
+      setQuizError(err.response?.data?.detail || "Failed to create quiz.");
     }
   };
 
@@ -110,6 +145,56 @@ export default function TeacherDashboard() {
           </label>
           <button className="btn btn-primary span-2" type="submit">Add Question</button>
         </form>
+      </div>
+
+      <div className="card">
+        <h3>Create Quiz</h3>
+        {quizError && <div className="alert alert-error">{quizError}</div>}
+        {quizSuccess && <div className="alert alert-success">{quizSuccess}</div>}
+        <form onSubmit={submitQuiz} className="form-stack">
+          <label>
+            Title
+            <input
+              value={quizForm.title}
+              onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
+              required
+            />
+          </label>
+          <div>
+            <span className="muted">Concepts covered</span>
+            <div className="concept-checklist">
+              {concepts.map((c) => (
+                <label key={c.id} className="concept-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={quizForm.concept_ids.includes(c.id)}
+                    onChange={() => toggleQuizConcept(c.id)}
+                  />
+                  {c.name}
+                </label>
+              ))}
+            </div>
+          </div>
+          <button className="btn btn-primary" type="submit" disabled={quizForm.concept_ids.length === 0}>
+            Publish Quiz
+          </button>
+        </form>
+
+        {quizzes.length > 0 && (
+          <div className="table-wrap" style={{ marginTop: 16 }}>
+            <table className="table">
+              <thead><tr><th>Title</th><th>Concepts</th></tr></thead>
+              <tbody>
+                {quizzes.map((q) => (
+                  <tr key={q.id}>
+                    <td>{q.title}</td>
+                    <td>{q.concept_ids.length}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

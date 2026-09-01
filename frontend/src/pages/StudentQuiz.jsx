@@ -1,11 +1,15 @@
 // SoP US4 (Subrata): adaptive quiz UI, plus US8's random-mode toggle and instant per-answer feedback
-import { useState } from "react";
+// Quiz picker below (choosing a teacher-published quiz vs. open-subject practice): SoP US2 (Annandita)
+import { useEffect, useState } from "react";
 import { api, getUser } from "../api/client";
 
 const SUBJECT = "Data Structures";
 
 export default function StudentQuiz() {
   const user = getUser();
+  const [quizzes, setQuizzes] = useState([]);
+  const [quizzesLoaded, setQuizzesLoaded] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState(null); // null = open subject-wide practice
   const [started, setStarted] = useState(false);
   const [mode, setMode] = useState("adaptive");
   const [question, setQuestion] = useState(null);
@@ -16,11 +20,24 @@ export default function StudentQuiz() {
   const [count, setCount] = useState(0);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    api.get("/quizzes/active", { params: { subject: SUBJECT } })
+      .then((res) => {
+        setQuizzes(res.data);
+        if (res.data.length > 0) setSelectedQuiz(res.data[0]);
+      })
+      .catch(() => {})
+      .finally(() => setQuizzesLoaded(true));
+  }, []);
+
   const loadNext = async (excludeIds) => {
     setError("");
     try {
       const res = await api.get(`/quiz/next-question/${user.id}`, {
-        params: { subject: SUBJECT, mode, exclude_concept_ids: excludeIds.join(",") },
+        params: {
+          subject: SUBJECT, mode, exclude_concept_ids: excludeIds.join(","),
+          quiz_id: selectedQuiz ? selectedQuiz.id : undefined,
+        },
       });
       if (res.data.complete || !res.data.question) {
         setComplete(true);
@@ -49,6 +66,7 @@ export default function StudentQuiz() {
     try {
       const res = await api.post("/quiz/submit-answer", {
         student_id: user.id, question_id: question.id, selected_option: option, mode,
+        quiz_id: selectedQuiz ? selectedQuiz.id : null,
       });
       setFeedback(res.data);
       setCount((c) => c + 1);
@@ -68,8 +86,35 @@ export default function StudentQuiz() {
       <h2>Adaptive Quiz — {SUBJECT}</h2>
       {error && <div className="alert alert-error">{error}</div>}
 
-      {!started && (
+      {!started && quizzesLoaded && (
         <div className="card">
+          {quizzes.length > 0 && (
+            <>
+              <p>Pick a quiz your teacher published, or practice across the whole subject.</p>
+              <div className="quiz-picker">
+                {quizzes.map((q) => (
+                  <label key={q.id} className="quiz-picker-option">
+                    <input
+                      type="radio"
+                      name="quiz-picker"
+                      checked={selectedQuiz?.id === q.id}
+                      onChange={() => setSelectedQuiz(q)}
+                    />
+                    {q.title} ({q.concept_ids.length} concept{q.concept_ids.length === 1 ? "" : "s"})
+                  </label>
+                ))}
+                <label className="quiz-picker-option">
+                  <input
+                    type="radio"
+                    name="quiz-picker"
+                    checked={selectedQuiz === null}
+                    onChange={() => setSelectedQuiz(null)}
+                  />
+                  Practice — whole subject
+                </label>
+              </div>
+            </>
+          )}
           <p>Choose a mode and start. AdaptIQ will pick each next question based on your current per-concept mastery.</p>
           <div className="mode-toggle">
             <label>
@@ -86,7 +131,10 @@ export default function StudentQuiz() {
       {started && complete && (
         <div className="card quiz-complete">
           <h3>Quiz complete!</h3>
-          <p>You answered {count} question{count === 1 ? "" : "s"} across every concept in {SUBJECT}.</p>
+          <p>
+            You answered {count} question{count === 1 ? "" : "s"} across every concept
+            {selectedQuiz ? ` in "${selectedQuiz.title}"` : ` in ${SUBJECT}`}.
+          </p>
           <a className="btn btn-primary" href="/mastery">View Mastery Map</a>
         </div>
       )}

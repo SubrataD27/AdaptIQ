@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -39,6 +41,27 @@ class Question(Base):
     concept = relationship("Concept")
 
 
+class Quiz(Base):
+    """SoP US2 (Annandita): a teacher-published quiz — a subject plus a
+    chosen subset of its concepts, shared with students."""
+    __tablename__ = "quizzes"
+    id = Column(Integer, primary_key=True)
+    subject = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    concept_ids_json = Column(String, nullable=False, default="[]")
+    teacher_id = Column(Integer, ForeignKey("users.id"))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    @property
+    def concept_ids(self) -> list[int]:
+        return json.loads(self.concept_ids_json)
+
+    @concept_ids.setter
+    def concept_ids(self, value: list[int]) -> None:
+        self.concept_ids_json = json.dumps(value)
+
+
 class Mastery(Base):
     """Per-student, per-concept current BKT mastery probability.
     Updated per SoP US5 (Subrata); displayed per SoP US6 (Annandita)."""
@@ -57,6 +80,7 @@ class Attempt(Base):
     student_id = Column(Integer, ForeignKey("users.id"))
     question_id = Column(Integer, ForeignKey("questions.id"))
     concept_id = Column(Integer, ForeignKey("concepts.id"))
+    quiz_id = Column(Integer, ForeignKey("quizzes.id"), nullable=True)  # SoP US2: set when answered as part of a published quiz
     mode = Column(String, default="adaptive")  # "adaptive" | "random" — SoP US8
     is_correct = Column(Boolean)
     p_mastery_before = Column(Float)

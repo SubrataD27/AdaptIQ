@@ -9,11 +9,19 @@ router = APIRouter(prefix="/quiz", tags=["quiz"])  # SoP US4/US5 (Subrata); mast
 
 @router.get("/next-question/{student_id}")
 def next_question(student_id: int, subject: str, mode: str = "adaptive",
-                   exclude_concept_ids: str = "", db: Session = Depends(get_db)):
+                   exclude_concept_ids: str = "", quiz_id: int | None = None,
+                   db: Session = Depends(get_db)):
     """SoP US4 (Subrata): adaptive quiz delivery, plus the US8 random-baseline
     mode. exclude_concept_ids is a comma-separated list of concept ids
-    already asked this session, so a session never repeats a concept."""
-    concepts = db.query(models.Concept).filter_by(subject=subject).all()
+    already asked this session, so a session never repeats a concept.
+    quiz_id (SoP US2) restricts the pool to that published quiz's concepts."""
+    if quiz_id is not None:
+        quiz = db.query(models.Quiz).get(quiz_id)
+        if not quiz:
+            raise HTTPException(404, "Quiz not found")
+        concepts = db.query(models.Concept).filter(models.Concept.id.in_(quiz.concept_ids)).all()
+    else:
+        concepts = db.query(models.Concept).filter_by(subject=subject).all()
     if not concepts:
         raise HTTPException(404, "No concepts for this subject")
 
@@ -26,19 +34,19 @@ def next_question(student_id: int, subject: str, mode: str = "adaptive",
 
     available = [c.id for c in concepts if c.id not in excluded]
     if not available:
-        return {"question": None, "concept_id": None, "mode": mode, "complete": True}
+        return {"question": None, "concept_id": None, "mode": mode, "complete": True, "quiz_id": quiz_id}
 
     if mode == "random":
         concept_id = random.choice(available)
     else:
         concept_id = bkt.select_next_concept(mastery_rows, asked_concept_ids=excluded)
         if concept_id is None:
-            return {"question": None, "concept_id": None, "mode": mode, "complete": True}
+            return {"question": None, "concept_id": None, "mode": mode, "complete": True, "quiz_id": quiz_id}
 
     question = db.query(models.Question).filter_by(concept_id=concept_id).first()
     if not question:
         raise HTTPException(404, "No question bank entry for selected concept")
-    return {"question": question, "concept_id": concept_id, "mode": mode, "complete": False}
+    return {"question": question, "concept_id": concept_id, "mode": mode, "complete": False, "quiz_id": quiz_id}
 
 
 @router.post("/submit-answer")
@@ -64,7 +72,8 @@ def submit_answer(payload: schemas.AnswerSubmit, db: Session = Depends(get_db)):
 
     db.add(models.Attempt(
         student_id=payload.student_id, question_id=question.id, concept_id=concept.id,
-        mode=payload.mode, is_correct=is_correct, p_mastery_before=p_before, p_mastery_after=p_after,
+        quiz_id=payload.quiz_id, mode=payload.mode, is_correct=is_correct,
+        p_mastery_before=p_before, p_mastery_after=p_after,
     ))
     db.commit()
     return {"correct": is_correct, "correct_option": question.correct_option,
@@ -92,11 +101,20 @@ def quiz_history(student_id: int, db: Session = Depends(get_db)):
         .all()
     )
     concept_names = {c.id: c.name for c in db.query(models.Concept).all()}
+    quiz_titles = {q.id: q.title for q in db.query(models.Quiz).all()}
 
+    # attempts is already ordered most-recent-first, so the first attempt
+    # seen for a given key carries that session's most recent timestamp.
     sessions: dict[str, dict] = {}
     for a in attempts:
-        key = a.timestamp.strftime("%Y-%m-%d")
-        session = sessions.setdefault(key, {"date": key, "attempts": [], "correct": 0, "total": 0})
+        if a.quiz_id and a.quiz_id in quiz_titles:
+            key = f"quiz-{a.quiz_id}"
+            label = f"Quiz: {quiz_titles[a.quiz_id]}"
+        else:
+            key = a.timestamp.strftime("%Y-%m-%d")
+            label = key
+        session = sessions.setdefault(
+            key, {"date": label, "attempts": [], "correct": 0, "total": 0, "_sort_ts": a.timestamp})
         session["attempts"].append({
             "question_id": a.question_id,
             "concept": concept_names.get(a.concept_id, "Unknown"),
@@ -108,4 +126,7 @@ def quiz_history(student_id: int, db: Session = Depends(get_db)):
         if a.is_correct:
             session["correct"] += 1
 
-    return sorted(sessions.values(), key=lambda s: s["date"], reverse=True)
+    ordered = sorted(sessions.values(), key=lambda s: s["_sort_ts"], reverse=True)
+    for s in ordered:
+        del s["_sort_ts"]
+    return ordered
