@@ -8,26 +8,37 @@ router = APIRouter(prefix="/quiz", tags=["quiz"])  # US-05 through US-11
 
 
 @router.get("/next-question/{student_id}")
-def next_question(student_id: int, subject: str, mode: str = "adaptive", db: Session = Depends(get_db)):
-    """US-07 (adaptive) / US-08 (random baseline)."""
+def next_question(student_id: int, subject: str, mode: str = "adaptive",
+                   exclude_concept_ids: str = "", db: Session = Depends(get_db)):
+    """US-07 (adaptive) / US-08 (random baseline). exclude_concept_ids is a
+    comma-separated list of concept ids already asked this session, so a
+    session never repeats a concept."""
     concepts = db.query(models.Concept).filter_by(subject=subject).all()
     if not concepts:
         raise HTTPException(404, "No concepts for this subject")
+
+    excluded = {int(x) for x in exclude_concept_ids.split(",") if x.strip().isdigit()}
 
     mastery_rows = {m.concept_id: m.p_mastery for m in
                      db.query(models.Mastery).filter_by(student_id=student_id).all()}
     for c in concepts:
         mastery_rows.setdefault(c.id, c.p_init)
 
+    available = [c.id for c in concepts if c.id not in excluded]
+    if not available:
+        return {"question": None, "concept_id": None, "mode": mode, "complete": True}
+
     if mode == "random":
-        concept_id = random.choice([c.id for c in concepts])
+        concept_id = random.choice(available)
     else:
-        concept_id = bkt.select_next_concept(mastery_rows, asked_concept_ids=set())
+        concept_id = bkt.select_next_concept(mastery_rows, asked_concept_ids=excluded)
+        if concept_id is None:
+            return {"question": None, "concept_id": None, "mode": mode, "complete": True}
 
     question = db.query(models.Question).filter_by(concept_id=concept_id).first()
     if not question:
         raise HTTPException(404, "No question bank entry for selected concept")
-    return {"question": question, "concept_id": concept_id, "mode": mode}
+    return {"question": question, "concept_id": concept_id, "mode": mode, "complete": False}
 
 
 @router.post("/submit-answer")
@@ -66,3 +77,32 @@ def mastery_map(student_id: int, db: Session = Depends(get_db)):
     rows = db.query(models.Mastery).filter_by(student_id=student_id).all()
     return [{"concept_id": r.concept_id, "p_mastery": r.p_mastery,
              "needs_revision": r.p_mastery < 0.6} for r in rows]
+
+
+@router.get("/history/{student_id}")
+def quiz_history(student_id: int, db: Session = Depends(get_db)):
+    """US-04: student's past attempts, grouped by session/date, with score."""
+    attempts = (
+        db.query(models.Attempt)
+        .filter_by(student_id=student_id)
+        .order_by(models.Attempt.timestamp.desc())
+        .all()
+    )
+    concept_names = {c.id: c.name for c in db.query(models.Concept).all()}
+
+    sessions: dict[str, dict] = {}
+    for a in attempts:
+        key = a.timestamp.strftime("%Y-%m-%d")
+        session = sessions.setdefault(key, {"date": key, "attempts": [], "correct": 0, "total": 0})
+        session["attempts"].append({
+            "question_id": a.question_id,
+            "concept": concept_names.get(a.concept_id, "Unknown"),
+            "mode": a.mode,
+            "is_correct": a.is_correct,
+            "timestamp": a.timestamp.isoformat(),
+        })
+        session["total"] += 1
+        if a.is_correct:
+            session["correct"] += 1
+
+    return sorted(sessions.values(), key=lambda s: s["date"], reverse=True)

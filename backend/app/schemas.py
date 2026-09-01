@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class UserCreate(BaseModel):
@@ -8,9 +8,35 @@ class UserCreate(BaseModel):
     role: str  # "teacher" | "student"
 
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    email: str
+    role: str
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
+
+
+class ConceptOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    subject: str
 
 
 class QuestionCreate(BaseModel):
