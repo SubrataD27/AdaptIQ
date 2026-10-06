@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas, bkt
@@ -39,7 +40,14 @@ def next_question(student_id: int, subject: str, mode: str = "adaptive",
     if mode == "random":
         concept_id = random.choice(available)
     else:
-        concept_id = bkt.select_next_concept(mastery_rows, asked_concept_ids=excluded)
+        attempt_counts = dict(
+            db.query(models.Attempt.concept_id, func.count(models.Attempt.id))
+            .filter_by(student_id=student_id)
+            .group_by(models.Attempt.concept_id)
+            .all())
+        concept_id = bkt.select_next_concept(
+            {c.id: mastery_rows[c.id] for c in concepts}, asked_concept_ids=excluded,
+            attempt_counts=attempt_counts)
         if concept_id is None:
             return {"question": None, "concept_id": None, "mode": mode, "complete": True, "quiz_id": quiz_id}
 

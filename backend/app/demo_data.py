@@ -10,7 +10,7 @@ number on screen is internally consistent:
   (p_learn).
 - Students take quiz *sessions* of 4-6 questions. A session never repeats a
   concept, adaptive sessions pick concepts with the real
-  bkt.select_next_concept, and random sessions pick uniformly, the same as
+  coverage-aware bkt.select_next_concept, and random sessions pick uniformly, the same as
   /quiz/next-question.
 - Mastery is updated with the real bkt.update_mastery after every answer,
   and each Attempt logs the before/after values that the Research page and
@@ -99,6 +99,7 @@ def seed_student(db, rng, student, skill, concepts, questions_by_concept, quiz):
              for c in concepts}
     by_id = {c.id: c for c in concepts}
     mastery_rows = {}  # concept_id -> Mastery row, so each pair is inserted exactly once
+    attempt_counts = {c.id: 0 for c in concepts}
 
     n_sessions = rng.randint(*SESSIONS_PER_STUDENT)
     days_ago = sorted(rng.sample(range(1, HISTORY_DAYS), n_sessions), reverse=True)
@@ -117,7 +118,8 @@ def seed_student(db, rng, student, skill, concepts, questions_by_concept, quiz):
             estimates = {cid: (mastery_rows[cid].p_mastery if cid in mastery_rows else by_id[cid].p_init)
                          for cid in by_id}
             if mode == "adaptive":
-                concept_id = bkt.select_next_concept(estimates, asked_concept_ids=asked)
+                concept_id = bkt.select_next_concept(estimates, asked_concept_ids=asked,
+                                                     attempt_counts=attempt_counts)
             else:
                 concept_id = rng.choice([cid for cid in by_id if cid not in asked])
             concept = by_id[concept_id]
@@ -152,6 +154,7 @@ def seed_student(db, rng, student, skill, concepts, questions_by_concept, quiz):
                 p_mastery_before=p_before, p_mastery_after=p_after, timestamp=ts,
             ))
             n_answers += 1
+            attempt_counts[concept_id] += 1
             ts += timedelta(seconds=rng.randint(25, 90))
 
             # Practising can teach the concept (BKT learning transition).

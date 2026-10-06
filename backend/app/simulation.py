@@ -37,6 +37,7 @@ def run_trial(rng: random.Random, concepts: list, true_mastery: dict, mode: str,
     """One simulated student answering n_questions in the given mode.
     Returns (questions_to_convergence or None, final mean |error| across concepts)."""
     estimate = {c.id: c.p_init for c in concepts}
+    attempt_counts = {c.id: 0 for c in concepts}
     streak = 0
     converged_at = None
 
@@ -44,12 +45,14 @@ def run_trial(rng: random.Random, concepts: list, true_mastery: dict, mode: str,
         if mode == "random":
             concept = rng.choice(concepts)
         else:
-            concept_id = bkt.select_next_concept(estimate, asked_concept_ids=set())
+            concept_id = bkt.select_next_concept(estimate, asked_concept_ids=set(),
+                                                 attempt_counts=attempt_counts)
             concept = next(c for c in concepts if c.id == concept_id)
 
         correct = simulate_response(rng, true_mastery[concept.id], concept.p_slip, concept.p_guess)
         estimate[concept.id] = bkt.update_mastery(
             estimate[concept.id], correct, concept.p_learn, concept.p_slip, concept.p_guess)
+        attempt_counts[concept.id] += 1
 
         avg_error = statistics.mean(abs(estimate[c.id] - true_mastery[c.id]) for c in concepts)
         if avg_error <= CONVERGENCE_EPSILON:

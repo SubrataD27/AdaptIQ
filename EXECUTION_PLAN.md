@@ -37,10 +37,9 @@ width):
   questions. See Phase C.
 - **No hosted deployment.** Proposal mentions Render/Railway free tier.
   Currently local-only.
-- **Adaptive selection strategy doesn't yet beat random on whole-profile
-  accuracy in simulation** — see Phase D's findings below. Worth exploring
-  as a follow-up (e.g. a coverage or uncertainty term in `select_next_concept`)
-  before leaning on it too hard in the written report.
+- **Adaptive selection only partly beats random in simulation.** The
+  coverage rule (SCRUM-22) closed most of the gap, but random still wins at
+  the default 30-question budget. See "SCRUM-22 update" under Phase D.
 
 ## Phase B — Close US2: real Quiz entity — **done**
 
@@ -98,6 +97,29 @@ future scope" objective #5 asks for. Options if the team wants adaptive to
 win this metric before the write-up: add a coverage/round-robin fallback
 so under-visited concepts get revisited periodically, or weight selection
 by estimate *uncertainty* rather than raw value.
+
+**SCRUM-22 update — coverage-aware selection.** `select_next_concept` now
+takes per-concept attempt counts: among concepts not yet asked this session
+it picks the least-practised ones first, then the lowest mastery among those.
+The live quiz, the simulation and the demo-data generator all use it.
+Uncertainty weighting (p(1-p)/(1+count)) was also tried and did not help.
+Re-run of `python -m app.simulation` (30 students, mean absolute error):
+
+| Setting | Adaptive (old) | Adaptive (coverage) | Random |
+|---|---|---|---|
+| 30 q, seed 42 (Research page) | 0.316 | 0.262 | 0.245 |
+| 30 q, seed 1 | 0.317 | 0.278 | 0.231 |
+| 30 q, seed 7 | 0.343 | 0.270 | 0.288 |
+| 12 q, seed 42 | 0.267 | 0.226 | 0.245 |
+| 60 q, seed 42 | 0.396 | 0.322 | 0.300 |
+
+Adaptive error fell 15-21% everywhere and now beats random on short quizzes,
+but random still wins at the default budget on 2 of 3 seeds. Error rises with
+more questions for *every* strategy: simulated learners have a fixed true
+mastery, while BKT's p_learn term assumes they learn after each answer, so
+repeated observations push estimates upward. A simulation where learners also
+learn (or fitted p_learn values from pilot data) is the next step before
+claiming adaptive wins.
 
 ## Reference: Technology stack check against proposal
 

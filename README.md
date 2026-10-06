@@ -83,7 +83,7 @@ See [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for the rehearsed review walkthrough.
 | US1 | Annandita | Concept- and difficulty-tagged question bank; "Add Question" form on the Teacher Dashboard |
 | US2 | Annandita | Teacher publishes a quiz over a chosen set of concepts; students pick it or practise the whole subject |
 | US3 | Annandita | JWT register/login for teachers and students, role-based redirect |
-| US4 | Subrata | Adaptive next-question selection (weakest concept first) + random baseline mode |
+| US4 | Subrata | Adaptive next-question selection (least-practised concept first, then weakest) + random baseline mode |
 | US5 | Subrata | 4-parameter BKT mastery update on every answer (`backend/app/bkt.py`) |
 | US6 | Annandita | Per-student mastery map + revision suggestions (< 60% mastery) |
 | US7 | Subrata | Class-level weak-concept report on the Teacher Dashboard |
