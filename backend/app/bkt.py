@@ -2,10 +2,14 @@
 Bayesian Knowledge Tracing core — SoP US5 (Subrata): per-answer mastery
 update; SoP US4 (Subrata): adaptive concept selection.
 
-Standard 4-parameter BKT update (no external pyBKT dependency needed for the
-live per-answer update; pyBKT is used offline to *fit* p_learn/p_slip/p_guess
-from pilot data — see scripts/fit_bkt_params.py).
+Standard 4-parameter BKT update, implemented directly (no pyBKT dependency).
+p_init/p_learn/p_slip/p_guess are currently hand-set per concept in
+app/data/data_structures.json; fitting them from pilot data (e.g. with pyBKT)
+is planned future work.
 """
+import random
+
+DIFFICULTY_LEVELS = ("easy", "medium", "hard")
 
 
 def update_mastery(p_prev: float, correct: bool, p_learn: float, p_slip: float, p_guess: float) -> float:
@@ -39,3 +43,26 @@ def select_next_concept(mastery_by_concept: dict[int, float], asked_concept_ids:
         fewest = min(attempt_counts.get(cid, 0) for cid in candidates)
         candidates = {cid: p for cid, p in candidates.items() if attempt_counts.get(cid, 0) == fewest}
     return min(candidates, key=candidates.get)
+
+
+def target_difficulty(p_mastery: float) -> str:
+    """Multi-level adaptivity: easy questions while a concept is weak (< 40%),
+    medium while it is developing (40-70%), hard once it is strong (>= 70%)."""
+    if p_mastery < 0.4:
+        return "easy"
+    if p_mastery < 0.7:
+        return "medium"
+    return "hard"
+
+
+def select_question(questions: list, p_mastery: float, seen_counts: dict[int, int], rng=random):
+    """Pick a question for the chosen concept: closest to the target difficulty
+    first, then the one this student has seen least, ties broken at random."""
+    target = DIFFICULTY_LEVELS.index(target_difficulty(p_mastery))
+
+    def key(q):
+        level = DIFFICULTY_LEVELS.index(q.difficulty) if q.difficulty in DIFFICULTY_LEVELS else 1
+        return abs(level - target), seen_counts.get(q.id, 0)
+
+    best = min(key(q) for q in questions)
+    return rng.choice([q for q in questions if key(q) == best])

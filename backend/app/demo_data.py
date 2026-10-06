@@ -10,7 +10,8 @@ number on screen is internally consistent:
   (p_learn).
 - Students take quiz *sessions* of 4-6 questions. A session never repeats a
   concept, adaptive sessions pick concepts with the real
-  coverage-aware bkt.select_next_concept, and random sessions pick uniformly, the same as
+  coverage-aware bkt.select_next_concept and difficulty-aware
+  bkt.select_question, and random sessions pick uniformly, the same as
   /quiz/next-question.
 - Mastery is updated with the real bkt.update_mastery after every answer,
   and each Attempt logs the before/after values that the Research page and
@@ -53,14 +54,16 @@ DEMO_STUDENTS = [
     {"name": "Rahul Mishra", "email": "rahul.demo@adaptiq.test", "skill": 0.55},
 ]
 # Per-concept shift on a student's skill, so the class report tells a clear
-# story: fundamentals (Arrays, Stacks, Queues) strong, Trees/Graphs weak.
-CONCEPT_EASE = {"Arrays": 0.2, "Stacks": 0.15, "Queues": 0.1,
-                "Linked Lists": -0.05, "Trees": -0.35, "Graphs": -0.45}
+# story: fundamentals (Arrays, Stacks, Queues, Sorting) strong; Trees, Graphs,
+# Heaps and Recursion weak; Linked Lists and Hashing in between.
+CONCEPT_EASE = {"Arrays": 0.2, "Stacks": 0.15, "Queues": 0.1, "Sorting": 0.1,
+                "Linked Lists": -0.05, "Hashing": 0.0,
+                "Trees": -0.35, "Graphs": -0.45, "Heaps": -0.25, "Recursion": -0.2}
 # Fraction of each concept's p_learn applied to the hidden state per practice
 # answer: a single MCQ teaches less than BKT's per-opportunity assumption.
 LEARN_SCALE = 0.4
 SESSIONS_PER_STUDENT = (3, 4)
-QUESTIONS_PER_SESSION = (4, 6)
+QUESTIONS_PER_SESSION = (5, 8)
 HISTORY_DAYS = 14
 RNG_SEED = 2024
 
@@ -100,6 +103,7 @@ def seed_student(db, rng, student, skill, concepts, questions_by_concept, quiz):
     by_id = {c.id: c for c in concepts}
     mastery_rows = {}  # concept_id -> Mastery row, so each pair is inserted exactly once
     attempt_counts = {c.id: 0 for c in concepts}
+    seen_questions = {}  # question_id -> times answered, for the question picker
 
     n_sessions = rng.randint(*SESSIONS_PER_STUDENT)
     days_ago = sorted(rng.sample(range(1, HISTORY_DAYS), n_sessions), reverse=True)
@@ -125,7 +129,12 @@ def seed_student(db, rng, student, skill, concepts, questions_by_concept, quiz):
             concept = by_id[concept_id]
             asked.add(concept_id)
 
-            question = rng.choice(questions_by_concept[concept_id])
+            if mode == "adaptive":
+                question = bkt.select_question(questions_by_concept[concept_id], estimates[concept_id],
+                                               seen_questions, rng)
+            else:
+                question = rng.choice(questions_by_concept[concept_id])
+            seen_questions[question.id] = seen_questions.get(question.id, 0) + 1
             if knows[concept_id]:
                 is_correct = rng.random() > concept.p_slip
             else:

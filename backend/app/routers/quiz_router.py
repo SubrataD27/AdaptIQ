@@ -54,16 +54,23 @@ def next_question(student_id: int, subject: str, mode: str = "adaptive",
     questions = db.query(models.Question).filter_by(concept_id=concept_id).all()
     if not questions:
         raise HTTPException(404, "No question bank entry for selected concept")
-    # Serve the question this student has seen least, so repeat sessions
-    # (and newly added questions) rotate through the bank.
     seen = dict(
         db.query(models.Attempt.question_id, func.count(models.Attempt.id))
         .filter_by(student_id=student_id, concept_id=concept_id)
         .group_by(models.Attempt.question_id)
         .all())
-    fewest = min(seen.get(q.id, 0) for q in questions)
-    question = random.choice([q for q in questions if seen.get(q.id, 0) == fewest])
-    return {"question": question, "concept_id": concept_id, "mode": mode, "complete": False, "quiz_id": quiz_id}
+    p_mastery = mastery_rows[concept_id]
+    if mode == "random":
+        # Research baseline: any difficulty, least-seen first so sessions rotate.
+        fewest = min(seen.get(q.id, 0) for q in questions)
+        question = random.choice([q for q in questions if seen.get(q.id, 0) == fewest])
+        target = None
+    else:
+        # Multi-level adaptivity: question difficulty follows current mastery.
+        question = bkt.select_question(questions, p_mastery, seen)
+        target = bkt.target_difficulty(p_mastery)
+    return {"question": question, "concept_id": concept_id, "mode": mode, "complete": False, "quiz_id": quiz_id,
+            "p_mastery": p_mastery, "target_difficulty": target}
 
 
 @router.post("/submit-answer")

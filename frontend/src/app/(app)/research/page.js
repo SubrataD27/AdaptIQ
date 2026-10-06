@@ -112,12 +112,15 @@ export default function ResearchPage() {
           <Panel title="Findings">
             <Box component="ul" sx={{ m: 0, pl: 2.5, "& li": { mb: 1, color: "text.secondary" }, "& b": { color: "text.primary", fontWeight: 600 } }}>
               <li>
-                <b>Adaptive wins on short quizzes.</b>{" "}
-                {sims ? `In this run it is more accurate at ${winsAt.length ? winsAt.join(", ") : "none of the"} question${winsAt.length === 1 ? "" : "s"} tested; random is ahead at the rest.` : "…"}
+                <b>Adaptive is more accurate on short and medium quizzes; long quizzes are a draw.</b>{" "}
+                {sims ? `In this run it is ahead at ${winsAt.length ? winsAt.join(", ") : "none of the"} question${winsAt.length === 1 ? "" : "s"}${winsAt.length === BUDGETS.length ? " (every length tested)" : ""}. ` : ""}
+                Repeated over 5 random seeds, adaptive was ahead at 30 questions in all 5 and at 12 questions in 4 (one tie);
+                at 60 questions random was ahead in 3 of 5.
               </li>
               <li>
                 <b>Coverage matters.</b> The original rule always drilled the lowest-mastery concept and left the others at their
-                starting estimate. Asking the least-practised concept first cut adaptive&apos;s error by roughly 15–20% at every quiz length.
+                starting estimate. Asking the least-practised concept first cut adaptive&apos;s error by 10–28% (more on longer quizzes),
+                and is what lets it beat random.
               </li>
               <li>
                 <b>Known limitation.</b> Error rises with more questions for both strategies: these simulated students never learn,

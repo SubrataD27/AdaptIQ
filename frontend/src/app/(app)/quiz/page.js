@@ -56,6 +56,7 @@ export default function QuizPage() {
   const [phase, setPhase] = useState("setup"); // setup | question | complete
   const [question, setQuestion] = useState(null);
   const [conceptId, setConceptId] = useState(null);
+  const [pick, setPick] = useState(null); // { p_mastery, target_difficulty } from the selector
   const [asked, setAsked] = useState([]);
   const [picked, setPicked] = useState(null);
   const [feedback, setFeedback] = useState(null);
@@ -102,6 +103,7 @@ export default function QuizPage() {
       } else {
         setQuestion(res.data.question);
         setConceptId(res.data.concept_id);
+        setPick({ p: res.data.p_mastery, target: res.data.target_difficulty });
         setPicked(null);
         setFeedback(null);
         setPhase("question");
@@ -308,6 +310,15 @@ export default function QuizPage() {
                       ? `${conceptName[conceptId] || "This concept"} is the one you've practised least so far, and among those your mastery is lowest — so this answer tells AdaptIQ the most.`
                       : "Random mode: this concept was drawn at random, as the baseline for the adaptive-vs-random study."}
                   </Typography>
+                  {mode === "adaptive" && pick?.target && (
+                    <>
+                      <Typography variant="h6" sx={{ mt: 2.5 }}>Why this difficulty</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }} className="difficulty-reason">
+                        {`Your estimate here is ${pct(pick.p)}, so AdaptIQ chose ${pick.target === "easy" ? "an easy" : pick.target === "medium" ? "a medium" : "a hard"} question. `}
+                        Below 40% you get easy questions, 40–70% medium, and 70% or more hard.
+                      </Typography>
+                    </>
+                  )}
                   <Stack direction="row" sx={{ mt: { xs: 2, lg: "auto" }, pt: 2, borderTop: 1, borderColor: "divider", justifyContent: "space-between" }}>
                     <Typography variant="body2" color="text.secondary">Current estimate</Typography>
                     <Typography variant="body2" sx={{ fontFamily: MONO }}>{currentP == null ? "—" : pct(currentP)}</Typography>
