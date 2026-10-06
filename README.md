@@ -5,7 +5,7 @@ Tracing (BKT) and picks the next quiz question to target what they don't know
 yet. Teachers get a class-level weak-concept report; the Research page
 compares adaptive vs. random question selection.
 
-FastAPI + SQLite backend, React (Vite) frontend.
+FastAPI + SQLite backend; Next.js 16 + Material UI frontend (MUI X Charts for the analytics).
 
 ## Quick start
 
@@ -18,12 +18,15 @@ cd AdaptIQ
 ```
 
 Needs **Python 3.10–3.13** (3.12 recommended; 3.14 is not supported by the
-pinned packages yet) and **Node.js 18+**. Nothing else to install by hand.
+pinned packages yet) and **Node.js 20.9+** (the current LTS is fine). Nothing else to install by hand.
 
 `start.sh` does everything: creates `backend/venv`, installs Python and npm
-dependencies, stops anything already on ports 8000/5173, **deletes and
-reseeds `backend/adaptiq.db`** (so every run starts from the same demo
+dependencies, builds the Next.js frontend when its code changed (about a
+minute the first time), stops anything already on ports 8000/5173, **deletes
+and reseeds `backend/adaptiq.db`** (so every run starts from the same demo
 state), starts both servers and opens the browser.
+
+The login page lists the demo accounts with one-click **Sign in** buttons.
 
 ## Demo logins
 
@@ -63,7 +66,8 @@ See [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for the rehearsed review walkthrough.
   # Terminal 2 — frontend
   cd frontend
   npm install                      # first time only
-  npm run dev
+  npm run build                    # after every git pull
+  npm start                        # serves on http://localhost:5173
   ```
 
 ## Troubleshooting
@@ -74,20 +78,22 @@ See [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for the rehearsed review walkthrough.
 | `backend/venv uses an unsupported Python` | Delete `backend/venv` and run `./start.sh` again. |
 | `$'\r': command not found` | Old checkout with CRLF line endings: `git rm --cached -r . -q && git reset --hard` (discards local edits), then re-run. |
 | Logged in as the wrong person after a restart | The DB is reset on every run; click **Log out** and log in again. |
-| Backend/frontend "didn't come up" | Read `backend/uvicorn.log` or `frontend/vite.log`. |
+| `Node.js ... is too old` | Install the Node.js LTS (20.9 or newer) from nodejs.org, reopen the terminal. |
+| `frontend build failed` | Read `frontend/build.log`; usually fixed by deleting `frontend/node_modules` and re-running. |
+| Backend/frontend "didn't come up" | Read `backend/uvicorn.log` or `frontend/next.log`. |
 
 ## What's built (finalized SoP US1–US8)
 
 | Story | Owner | What it does |
 |---|---|---|
-| US1 | Annandita | Concept- and difficulty-tagged question bank; "Add Question" form on the Teacher Dashboard |
+| US1 | Annandita | Concept- and difficulty-tagged question bank page with filters and an "Add question" dialog |
 | US2 | Annandita | Teacher publishes a quiz over a chosen set of concepts; students pick it or practise the whole subject |
 | US3 | Annandita | JWT register/login for teachers and students, role-based redirect |
 | US4 | Subrata | Adaptive next-question selection (least-practised concept first, then weakest) + random baseline mode |
 | US5 | Subrata | 4-parameter BKT mastery update on every answer (`backend/app/bkt.py`) |
-| US6 | Annandita | Per-student mastery map + revision suggestions (< 60% mastery) |
-| US7 | Subrata | Class-level weak-concept report on the Teacher Dashboard |
-| US8 | Subrata | Adaptive vs. random: live-attempt stats, simulated-learner comparison, pilot-study CSV export |
+| US6 | Annandita | Per-student mastery profile, per-concept learning curves, revision suggestions (< 60% mastery) |
+| US7 | Subrata | Class overview: weak-concept report, student × concept mastery heatmap, class activity |
+| US8 | Subrata | Adaptive vs. random: simulated-learner error curve (6-60 questions), live-attempt stats, pilot-study CSV export |
 
 Supplementary: quiz history page, startup seeding (6 concepts / 18 questions),
 demo data generator. Roadmap and open items: [`EXECUTION_PLAN.md`](EXECUTION_PLAN.md).
@@ -103,7 +109,7 @@ API docs: http://localhost:8000/docs while the backend is running.
 
 ## Project layout
 
-```
+```text
 backend/app/
   main.py            FastAPI app, CORS, startup seeding
   bkt.py             BKT update + adaptive concept selection
@@ -112,6 +118,9 @@ backend/app/
   simulation.py      simulated-learner research comparison
   routers/           auth, questions, quiz, quizzes, concepts, analytics
 frontend/src/
-  pages/             Login, StudentQuiz, MasteryMap, QuizHistory, TeacherDashboard, Research
+  app/page.js        sign-in portal (demo accounts, worked BKT example)
+  app/(app)/         quiz, mastery, history (student); teacher, questions, research (teacher)
+  components/        app shell (sidebar, role guard), shared UI
+  theme.js           MUI theme, chart colours, mastery bins
 start.sh             one-command demo startup
 ```

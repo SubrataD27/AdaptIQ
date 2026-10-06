@@ -125,9 +125,9 @@ claiming adaptive wins.
 
 | Proposal says | Current code | Notes |
 |---|---|---|
-| React.js, mobile-responsive | React.js, verified at 375px | Phase A fix applied |
+| React.js, mobile-responsive | Next.js 16 (React 19) + MUI 9, verified at 320-1440px | Rebuilt for Review 2 |
 | FastAPI + JWT | FastAPI + JWT | Matches |
 | pyBKT + NumPy | Custom Python BKT formula | Proposal allows "pyBKT/custom" — valid, don't rebuild unless Phase D wants pyBKT's parameter-fitting |
 | PostgreSQL (SQLite dev) | SQLite only | Fine for now; switch the one `DATABASE_URL` line before any real pilot with concurrent users |
-| Chart.js/Recharts | Recharts | Matches |
+| Chart.js/Recharts | MUI X Charts | Equivalent charting library |
 | Render/Railway hosted demo | Local only | Add if a shareable link is wanted |
