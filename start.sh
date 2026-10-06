@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
-# AdaptIQ — one-command dev startup.
-# Creates the backend venv if missing, installs/syncs dependencies for both
-# sides, starts both servers (skipping any already running), and opens the
-# app in your default browser.
+# AdaptIQ — one-command demo startup. Works from a fresh clone.
 #
-# Usage (Git Bash / any bash on Windows): bash start.sh
+#   ./start.sh        (Git Bash on Windows, macOS, Linux, WSL)
+#
+# Every run:
+#   1. picks a supported Python (3.10-3.13) and creates backend/venv if missing
+#   2. installs backend deps (requirements.txt) and frontend deps (if missing)
+#   3. stops any AdaptIQ servers already on :8000 / :5173
+#   4. DELETES backend/adaptiq.db and reseeds it (question bank + demo class),
+#      so the demo always starts from the same known state
+#   5. starts backend + frontend, waits until both answer, opens the browser
+# Press Ctrl+C to stop both servers.
 
 set -e
 
@@ -14,64 +20,152 @@ FRONTEND_DIR="$ROOT_DIR/frontend"
 BACKEND_PORT=8000
 FRONTEND_PORT=5173
 
-port_in_use() {
-  netstat -ano 2>/dev/null | grep -q ":$1 .*LISTENING"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) IS_WINDOWS=true ;;
+  *) IS_WINDOWS=false ;;
+esac
+
+say() { echo "[$1] $2"; }
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+# --- Pick a Python the pinned requirements support (3.10-3.13) ---
+supported_python() {
+  "$@" -c 'import sys; sys.exit(0 if (3, 10) <= sys.version_info[:2] <= (3, 13) else 1)' >/dev/null 2>&1
 }
 
-echo "== AdaptIQ dev startup =="
-
-command -v python >/dev/null 2>&1 || { echo "python not found on PATH"; exit 1; }
-command -v npm >/dev/null 2>&1 || { echo "npm not found on PATH"; exit 1; }
-
-# --- Backend: venv + deps ---
-if [ ! -d "$BACKEND_DIR/venv" ]; then
-  echo "[backend] no venv found, creating one..."
-  python -m venv "$BACKEND_DIR/venv"
-fi
-
-echo "[backend] syncing dependencies..."
-"$BACKEND_DIR/venv/Scripts/pip.exe" install -q -r "$BACKEND_DIR/requirements.txt"
-
-if port_in_use "$BACKEND_PORT"; then
-  echo "[backend] already running on :$BACKEND_PORT, leaving it alone"
-else
-  echo "[backend] starting on :$BACKEND_PORT..."
-  (cd "$BACKEND_DIR" && "./venv/Scripts/python.exe" -m uvicorn app.main:app --port "$BACKEND_PORT" > uvicorn.log 2>&1 &)
-fi
-
-# --- Frontend: deps ---
-if [ ! -d "$FRONTEND_DIR/node_modules" ]; then
-  echo "[frontend] no node_modules found, running npm install (first run, can take a minute)..."
-  (cd "$FRONTEND_DIR" && npm install)
-fi
-
-if port_in_use "$FRONTEND_PORT"; then
-  echo "[frontend] already running on :$FRONTEND_PORT, leaving it alone"
-else
-  echo "[frontend] starting on :$FRONTEND_PORT..."
-  (cd "$FRONTEND_DIR" && npm run dev > vite.log 2>&1 &)
-fi
-
-# --- Wait for the frontend to actually answer, then open it ---
-echo "[wait] waiting for the app to come up..."
-ready=false
-for _ in $(seq 1 30); do
-  if curl -s -o /dev/null "http://localhost:$FRONTEND_PORT"; then
-    ready=true
-    break
+find_python() {
+  local candidates=()
+  if command -v py >/dev/null 2>&1; then
+    candidates+=("py -3.12" "py -3.13" "py -3.11" "py -3.10")
   fi
-  sleep 1
-done
+  candidates+=("python3.12" "python3.13" "python3.11" "python3.10" "python3" "python")
+  for c in "${candidates[@]}"; do
+    # shellcheck disable=SC2086
+    if command -v ${c%% *} >/dev/null 2>&1 && supported_python $c; then
+      echo "$c"; return 0
+    fi
+  done
+  return 1
+}
 
-if [ "$ready" = false ]; then
-  echo "[wait] frontend didn't answer in time — check frontend/vite.log"
-  exit 1
+venv_python() {
+  if [ -x "$BACKEND_DIR/venv/Scripts/python.exe" ]; then
+    echo "$BACKEND_DIR/venv/Scripts/python.exe"
+  else
+    echo "$BACKEND_DIR/venv/bin/python"
+  fi
+}
+
+# --- Port helpers ---
+pids_on_port() {
+  if [ "$IS_WINDOWS" = true ]; then
+    netstat -ano 2>/dev/null | awk -v p=":$1" '$2 ~ p"$" && $4 == "LISTENING" {print $5}' | sort -u
+  elif command -v lsof >/dev/null 2>&1; then
+    lsof -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null || true
+  fi
+}
+
+free_port() {
+  local pids
+  pids="$(pids_on_port "$1")"
+  [ -z "$pids" ] && return 0
+  say stop "something is already on :$1 (pid $pids), stopping it for a clean demo start"
+  for pid in $pids; do
+    if [ "$IS_WINDOWS" = true ]; then
+      taskkill //F //PID "$pid" >/dev/null 2>&1 || true
+    else
+      kill "$pid" 2>/dev/null || true
+    fi
+  done
+  sleep 1
+}
+
+wait_for() {
+  local url="$1" name="$2" log="$3"
+  for _ in $(seq 1 60); do
+    if curl -s -o /dev/null "$url"; then return 0; fi
+    sleep 1
+  done
+  die "$name didn't come up within 60s — check $log"
+}
+
+echo "== AdaptIQ demo startup =="
+
+command -v npm >/dev/null 2>&1 || die "npm not found. Install Node.js 18+ from https://nodejs.org"
+command -v curl >/dev/null 2>&1 || die "curl not found."
+
+# --- 1. Backend venv + deps ---
+if [ ! -x "$(venv_python)" ]; then
+  PY="$(find_python)" || die "Python 3.10-3.13 not found (3.14+ is not supported by the pinned packages). Install Python 3.12 from https://www.python.org/downloads/ and re-run."
+  say backend "creating venv with: $PY"
+  # shellcheck disable=SC2086
+  $PY -m venv "$BACKEND_DIR/venv"
+fi
+VPY="$(venv_python)"
+supported_python "$VPY" || die "backend/venv uses an unsupported Python ($("$VPY" --version 2>&1)). Delete backend/venv and re-run."
+
+say backend "installing dependencies ($("$VPY" --version 2>&1))..."
+"$VPY" -m pip install -q --disable-pip-version-check -r "$BACKEND_DIR/requirements.txt"
+
+# --- 2. Frontend deps ---
+if [ ! -d "$FRONTEND_DIR/node_modules" ] || [ "$FRONTEND_DIR/package-lock.json" -nt "$FRONTEND_DIR/node_modules/.package-lock.json" ]; then
+  say frontend "running npm install (first run can take a minute)..."
+  (cd "$FRONTEND_DIR" && npm install --no-audit --no-fund)
 fi
 
-echo "[open] launching the app in your browser..."
-cmd.exe /c start "" "http://localhost:$FRONTEND_PORT" >/dev/null 2>&1 || true
+# --- 3. Stop old servers (the backend holds the DB file open) ---
+free_port "$BACKEND_PORT"
+free_port "$FRONTEND_PORT"
 
-echo "== Ready =="
-echo "Backend:  http://localhost:$BACKEND_PORT  (API docs at /docs)"
-echo "Frontend: http://localhost:$FRONTEND_PORT"
-echo "Logs:     backend/uvicorn.log, frontend/vite.log"
+# --- 4. Fresh demo database ---
+say db "resetting adaptiq.db and seeding demo data..."
+rm -f "$BACKEND_DIR/adaptiq.db"
+(cd "$BACKEND_DIR" && "$VPY" -m app.demo_data)
+
+# --- 5. Start servers ---
+say backend "starting on :$BACKEND_PORT (log: backend/uvicorn.log)"
+(cd "$BACKEND_DIR" && exec "$VPY" -m uvicorn app.main:app --port "$BACKEND_PORT" > uvicorn.log 2>&1) &
+BACKEND_PID=$!
+
+say frontend "starting on :$FRONTEND_PORT (log: frontend/vite.log)"
+(cd "$FRONTEND_DIR" && exec node node_modules/vite/bin/vite.js --port "$FRONTEND_PORT" --strictPort > vite.log 2>&1) &
+FRONTEND_PID=$!
+
+cleanup() {
+  echo
+  say stop "shutting down..."
+  kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+  free_port "$BACKEND_PORT" >/dev/null
+  free_port "$FRONTEND_PORT" >/dev/null
+  exit 0
+}
+trap cleanup INT TERM
+
+wait_for "http://localhost:$BACKEND_PORT/" "Backend" "backend/uvicorn.log"
+wait_for "http://localhost:$FRONTEND_PORT/" "Frontend" "frontend/vite.log"
+
+APP_URL="http://localhost:$FRONTEND_PORT"
+if [ -n "$ADAPTIQ_NO_BROWSER" ]; then
+  :
+elif [ "$IS_WINDOWS" = true ]; then
+  cmd.exe /c start "" "$APP_URL" >/dev/null 2>&1 || true
+elif command -v open >/dev/null 2>&1; then
+  open "$APP_URL" >/dev/null 2>&1 || true
+elif command -v xdg-open >/dev/null 2>&1; then
+  xdg-open "$APP_URL" >/dev/null 2>&1 || true
+fi
+
+cat <<EOF
+
+== Ready ==
+App:      $APP_URL
+API docs: http://localhost:$BACKEND_PORT/docs
+
+Demo logins (password for all: Demo1234!)
+  Teacher:  demo.teacher@adaptiq.test
+  Students: ananya.demo@adaptiq.test, rohit.demo@adaptiq.test, meera.demo@adaptiq.test
+
+Press Ctrl+C to stop both servers.
+EOF
+
+wait
