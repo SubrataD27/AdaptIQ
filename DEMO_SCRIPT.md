@@ -1,82 +1,88 @@
 # AdaptIQ — Demo Walkthrough (3-4 min)
 
 Run order matches the SoP story: static exams → BKT/adaptive → analytics.
-Story IDs below (US1-US8) match the finalized SoP; see `EXECUTION_PLAN.md`
-for the full ownership mapping.
+Story IDs (US1-US8) match the finalized SoP; see `EXECUTION_PLAN.md` for
+ownership.
 
-Before the review: start the backend (`uvicorn app.main:app --reload` from
-`backend/`, inside `venv`) and the frontend (`npm run dev` from `frontend/`).
-Demo accounts are already seeded — see `backend/app/demo_data.py`
-(`python -m app.demo_data` to reseed if the db is reset). The seeded demo
-students have no published quiz on their accounts yet, so the student quiz
-picker will default to "Practice — whole subject" until you publish one live
-in step 2.
+## Before the review (2 min)
+
+```bash
+git pull && ./start.sh        # Windows: inside Git Bash
+```
+
+Open http://localhost:5173. `start.sh` resets the database on every run, so
+the demo always starts from the same state:
+
+- Teacher `demo.teacher@adaptiq.test`, password `Demo1234!`
+- 12 students (`ananya`, `rohit`, `meera`, ... `.demo@adaptiq.test`, same
+  password), each with 3-4 quiz sessions over the last two weeks
+- A published **"Live Demo Quiz"** covering all 6 concepts
+- Class report: Graphs and Trees below 60% (red), Arrays/Stacks/Queues/Linked
+  Lists above it
+
+Rehearse once, then run `./start.sh` again right before presenting to get a
+clean database. If you're already logged in from a previous run, click
+**Log out** first.
 
 ## 1. Problem framing (30 sec)
 "A fixed quiz treats every student the same — the same questions, in the
 same order, regardless of what they already know. AdaptIQ instead estimates
 a student's mastery *per concept* using Bayesian Knowledge Tracing, and picks
-each next question to target the concept they're weakest on."
+each next question based on that estimate."
 
 ## 2. Teacher side (60 sec)
-- Log in as the teacher account.
-- Show the **Add Question** form briefly — concept-tagged, difficulty-tagged
-  question bank (US1).
-- Publish a **Quiz** covering all 6 concepts (title it something like
-  "Live Demo Quiz", check every concept box, Publish). This is what makes
-  the quiz picker show a real teacher-shared quiz on the student side in
-  step 3, not just open practice (US2).
-- Show the **Class Weak-Concept Report** — with the seeded demo data, Trees
-  and Graphs sit around 30-35% average mastery while Arrays sits near 60%+.
-  Point out this is real, aggregated per-concept data across multiple
-  students, not just an overall score (US7).
+- Log in as `demo.teacher@adaptiq.test` / `Demo1234!`.
+- **Class Weak-Concept Report** (top of the dashboard): Graphs and Trees are
+  red, below 60% average mastery; Arrays and Stacks are 80%+. This is real
+  per-concept data aggregated across 12 students, not an overall score (US7).
+- **Add Question** form: concept- and difficulty-tagged question bank (US1).
+- **Create Quiz**: "Live Demo Quiz" is already published (listed under the
+  form). Optionally publish another one live to show it (US2).
 
 ## 3. Student side, live (90 sec) — the centerpiece
-- Log in as the real demo student account (or register fresh on stage).
-- On the quiz page, the picker now shows "Live Demo Quiz" — select it (or
-  leave it selected, since the most recent published quiz is the default)
-  and start in **Adaptive** mode.
-- Answer 3-4 questions live. After each answer, point at the
-  "Mastery: X% → Y%" line — the number visibly moves in real time (US5).
-- Call out that the concept behind each question was chosen because it was
-  the student's current weakest — not random (US4).
+- Log out, log in as `ananya.demo@adaptiq.test` / `Demo1234!` (or register a
+  fresh student on stage — see the note below).
+- The quiz picker shows **"Live Demo Quiz"** (selected by default). Keep
+  **Adaptive** mode and click **Start Quiz**.
+- Answer 3-4 questions. After each answer, point at
+  "Mastery: X% → Y%": the estimate moves in real time (US5).
+- How the next concept is chosen (US4): within a session no concept repeats;
+  among the rest, AdaptIQ picks the one the student has practised least, and
+  among those the one with the lowest mastery. So every concept gets
+  evidence before any is drilled again.
+- A freshly registered student has no history, so their first question is
+  the concept with the lowest starting estimate (Graphs). That's a clean way
+  to show "weakest first".
 
 ## 4. Mastery map (30 sec)
-- Navigate to **Mastery Map**. Show the bar chart with real concept names.
-- Point at the revision suggestions list for anything under 60% mastery
-  (US6).
+- **Mastery Map** in the nav: per-concept bar chart with real concept names.
+- **Suggested Revision** lists every concept under 60% (US6).
+- **History** (optional): past sessions, labeled "Quiz: Live Demo Quiz" or
+  by date for open practice.
 
 ## 5. Research angle (45 sec)
-- Navigate to **Research** (teacher nav). Show three things:
-  - **Live attempts** — real logged mastery shift per answer, per mode.
-  - **Simulated learners** — 30 simulated students with known ground-truth
-    mastery, run through both strategies via the exact same BKT engine
-    (SoP objective #5). Be upfront if asked: the current numbers show
-    random beating adaptive on whole-profile accuracy, and the page
-    explains why (adaptive drills one weak concept at a time and can
-    leave others unrefined) — that's a real, reproducible finding, not a
-    bug, and it's exactly the kind of limitations discussion objective #5
-    expects (US8).
-  - **Pilot-study export** — the CSV download button, tying to the SoP's
-    Research Plan methodology (Pandas/Matplotlib analysis).
+Log back in as the teacher → **Research**:
+- **Live attempts**: logged attempts and average mastery shift per answer,
+  adaptive vs. random.
+- **Simulated learners**: 30 simulated students with a known true mastery,
+  run through both strategies with the same BKT engine (SoP objective #5).
+  Be upfront if asked: switching to coverage-aware selection cut adaptive's
+  error from 0.316 to 0.262, and adaptive now beats random on short quizzes
+  (~12 questions), but random is still slightly ahead at 30 questions
+  (0.245). One reason: the simulated students never learn, while BKT assumes
+  they do. That's a real limitation and future-work item, not a bug (US8).
+- **Pilot-study export**: the CSV download, for Pandas/Matplotlib analysis
+  per the Research Plan.
 
 ## 6. Jira board (15 sec, optional)
-- Show the Sprint board with stories moving through columns as evidence of
-  the Agile process.
+Show the sprint board (SCRUM-18/19/21/22) moving through columns as evidence
+of the Agile process.
 
 ## Fallback notes
-- If live typing is slow, the 3 seeded fake students
-  (`ananya.demo@adaptiq.test`, `rohit.demo@adaptiq.test`,
-  `meera.demo@adaptiq.test` — password `Demo1234!`) already have 8-10
-  answered questions each, so the weak-concept table and mastery map never
-  look empty even before the live portion. They have no quiz tied to their
-  attempts (open-subject practice), which is fine — it's still real BKT
-  data.
-- If you skip publishing a quiz in step 2, the student quiz picker falls
-  back to "Practice — whole subject" automatically — the adaptive flow
-  still works identically, just not scoped to a named quiz. Either path is
-  fine for the demo; publishing a quiz just also demonstrates US2.
-- Quiz History (`/history`, student nav) is available if asked about past
-  session tracking — labels sessions by quiz title when one was used,
-  otherwise by date. It's supplementary, not one of the SoP's 8 core
-  stories.
+- **Anything looks wrong**: Ctrl+C the terminal, run `./start.sh` again (under
+  10 s once installed; the very first run takes a few minutes). It resets
+  everything.
+- **Stuck on a page / wrong user shown**: click **Log out** and log in again.
+- **No bash available**: follow "Windows notes → PowerShell only" in the
+  README.
+- API docs for questions about the backend: http://localhost:8000/docs
