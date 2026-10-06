@@ -2,6 +2,7 @@
 // Quiz picker below (choosing a teacher-published quiz vs. open-subject practice): SoP US2 (Annandita)
 import { useEffect, useState } from "react";
 import { api, getUser } from "../api/client";
+import { MasteryRing } from "../components.jsx";
 
 const SUBJECT = "Data Structures";
 
@@ -157,10 +158,15 @@ export default function StudentQuiz() {
           </div>
           {feedback && (
             <div className={`feedback ${feedback.correct ? "feedback-correct" : "feedback-incorrect"}`}>
-              <p>{feedback.correct ? "Correct!" : `Incorrect. Correct answer: ${feedback.correct_option.toUpperCase()}`}</p>
-              <p className="mastery-shift">
-                Mastery: {(feedback.p_mastery_before * 100).toFixed(0)}% → {(feedback.p_mastery_after * 100).toFixed(0)}%
-              </p>
+              <div className="feedback-body">
+                <MasteryRing value={feedback.p_mastery_after} size={72} />
+                <div className="feedback-text">
+                  <p>{feedback.correct ? "Correct!" : `Incorrect. Correct answer: ${feedback.correct_option.toUpperCase()}`}</p>
+                  <p className="mastery-shift">
+                    Mastery: {(feedback.p_mastery_before * 100).toFixed(0)}% → {(feedback.p_mastery_after * 100).toFixed(0)}%
+                  </p>
+                </div>
+              </div>
               <button className="btn btn-primary" onClick={next}>Next Question</button>
             </div>
           )}

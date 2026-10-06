@@ -1,8 +1,8 @@
 // SoP US6 (Annandita): concept-wise mastery map + revision suggestions
 // (reassigned from the adaptive-engine epic to match the finalized SoP — no logic change)
 import { useEffect, useState } from "react";
-import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { api, getUser } from "../api/client";
+import { MasteryRing } from "../components.jsx";
 
 const SUBJECT = "Data Structures";
 
@@ -20,11 +20,13 @@ export default function MasteryMap() {
           api.get("/concepts/", { params: { subject: SUBJECT } }),
         ]);
         const conceptNames = Object.fromEntries(conceptsRes.data.map((c) => [c.id, c.name]));
-        const merged = masteryRes.data.map((d) => ({
-          ...d,
-          concept: conceptNames[d.concept_id] || `Concept ${d.concept_id}`,
-          mastery_pct: Math.round(d.p_mastery * 100),
-        }));
+        const merged = masteryRes.data
+          .map((d) => ({
+            ...d,
+            concept: conceptNames[d.concept_id] || `Concept ${d.concept_id}`,
+            mastery_pct: Math.round(d.p_mastery * 100),
+          }))
+          .sort((a, b) => a.concept_id - b.concept_id);
         setData(merged);
       } catch {
         setError("Failed to load your mastery map.");
@@ -44,15 +46,10 @@ export default function MasteryMap() {
       )}
       {data.length > 0 && (
         <div className="card">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 40 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="concept" angle={-20} textAnchor="end" interval={0} height={60} />
-              <YAxis domain={[0, 1]} />
-              <Tooltip formatter={(v) => `${Math.round(v * 100)}%`} />
-              <Bar dataKey="p_mastery" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="ring-grid">
+            {data.map((d) => <MasteryRing key={d.concept_id} value={d.p_mastery} label={d.concept} />)}
+          </div>
+          <p className="muted ring-legend">Green: mastered (60%+). Red: needs revision.</p>
         </div>
       )}
       {data.some((d) => d.needs_revision) && (

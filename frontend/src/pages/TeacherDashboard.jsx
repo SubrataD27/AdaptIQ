@@ -2,6 +2,7 @@
 // Create Quiz form: SoP US2 (Annandita).
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
+import { MasteryRing } from "../components.jsx";
 
 const SUBJECT = "Data Structures";
 const EMPTY_FORM = {
@@ -91,19 +92,14 @@ export default function TeacherDashboard() {
         {weakConcepts.length === 0 ? (
           <p className="muted">No student attempts logged yet for {SUBJECT}.</p>
         ) : (
-          <div className="table-wrap">
-            <table className="table">
-              <thead><tr><th>Concept</th><th>Avg. Mastery</th></tr></thead>
-              <tbody>
-                {weakConcepts.map((c) => (
-                  <tr key={c.concept_id} className={c.avg_mastery < 0.6 ? "row-weak" : ""}>
-                    <td>{c.concept}</td>
-                    <td>{(c.avg_mastery * 100).toFixed(0)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <p className="muted">Average mastery across the class, weakest first. Red concepts are below 60%.</p>
+            <div className="ring-grid">
+              {weakConcepts.map((c) => (
+                <MasteryRing key={c.concept_id} value={c.avg_mastery} label={c.concept} />
+              ))}
+            </div>
+          </>
         )}
       </div>
 

@@ -12,7 +12,9 @@ import { Navbar, RequireAuth } from "./components.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <Navbar />
+    <div className="app">
+      <Navbar />
+      <main className="app-main">
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/quiz" element={<RequireAuth role="student"><StudentQuiz /></RequireAuth>} />
@@ -21,5 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <Route path="/teacher" element={<RequireAuth role="teacher"><TeacherDashboard /></RequireAuth>} />
       <Route path="/research" element={<RequireAuth role="teacher"><Research /></RequireAuth>} />
     </Routes>
+      </main>
+    </div>
   </BrowserRouter>
 );

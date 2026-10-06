@@ -11,6 +11,8 @@
   --error: #dc2626;
   --error-bg: #fef2f2;
   --radius: 10px;
+  --primary-soft: #eef2ff;
+  --ring-track: #e8eaf3;
 }
 
 * {
@@ -53,57 +55,124 @@ h2, h3 {
   font-size: 0.9rem;
 }
 
-/* Navbar */
-.navbar {
+/* App shell: sidebar on desktop, top bar on narrow screens */
+.app {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 20px;
-  padding: 14px 20px;
+  min-height: 100%;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 16px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
-.navbar-brand {
+.sidebar-brand {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   color: var(--primary);
+  padding: 0 10px;
 }
 
-.navbar-links {
+.sidebar-links {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.navbar-links a {
+.sidebar-links a {
   color: var(--text);
   text-decoration: none;
   font-size: 0.95rem;
   white-space: nowrap;
+  padding: 9px 10px;
+  border-radius: 8px;
 }
 
-.navbar-links a:hover {
+.sidebar-links a:hover {
+  background: var(--bg);
   color: var(--primary);
 }
 
-.navbar-user {
+.sidebar-links a.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.sidebar-user {
+  margin-top: auto;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   font-size: 0.85rem;
   color: var(--text-muted);
+  padding: 0 10px;
+}
+
+.sidebar-user .btn-ghost {
+  padding-left: 0;
+}
+
+@media (max-width: 860px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-brand {
+    padding: 0;
+  }
+
+  .sidebar-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .sidebar-links a {
+    padding: 6px 10px;
+  }
+
+  .sidebar-user {
+    margin-top: 0;
+    margin-left: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+  }
 }
 
 @media (max-width: 480px) {
-  .navbar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .navbar-user {
+  .sidebar-user {
     width: 100%;
+    margin-left: 0;
     justify-content: space-between;
   }
 }
@@ -357,4 +426,66 @@ input:focus, select:focus {
 
 .text-incorrect {
   color: var(--error);
+}
+
+/* Mastery rings */
+.ring-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 18px 12px;
+  justify-items: center;
+}
+
+.mastery-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.mastery-ring-track {
+  stroke: var(--ring-track);
+}
+
+.mastery-ring-value {
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.mastery-ring-ok .mastery-ring-value {
+  stroke: var(--success);
+}
+
+.mastery-ring-weak .mastery-ring-value {
+  stroke: var(--error);
+}
+
+.mastery-ring-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  fill: var(--text);
+}
+
+.mastery-ring-label {
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.mastery-ring-weak .mastery-ring-label {
+  color: var(--error);
+}
+
+.ring-legend {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.feedback-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.feedback-text {
+  flex: 1;
+  min-width: 0;
 }
