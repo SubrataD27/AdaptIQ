@@ -51,9 +51,18 @@ def next_question(student_id: int, subject: str, mode: str = "adaptive",
         if concept_id is None:
             return {"question": None, "concept_id": None, "mode": mode, "complete": True, "quiz_id": quiz_id}
 
-    question = db.query(models.Question).filter_by(concept_id=concept_id).first()
-    if not question:
+    questions = db.query(models.Question).filter_by(concept_id=concept_id).all()
+    if not questions:
         raise HTTPException(404, "No question bank entry for selected concept")
+    # Serve the question this student has seen least, so repeat sessions
+    # (and newly added questions) rotate through the bank.
+    seen = dict(
+        db.query(models.Attempt.question_id, func.count(models.Attempt.id))
+        .filter_by(student_id=student_id, concept_id=concept_id)
+        .group_by(models.Attempt.question_id)
+        .all())
+    fewest = min(seen.get(q.id, 0) for q in questions)
+    question = random.choice([q for q in questions if seen.get(q.id, 0) == fewest])
     return {"question": question, "concept_id": concept_id, "mode": mode, "complete": False, "quiz_id": quiz_id}
 
 
@@ -98,6 +107,17 @@ def mastery_map(student_id: int, db: Session = Depends(get_db)):
              "needs_revision": r.p_mastery < 0.6} for r in rows]
 
 
+@router.get("/progress/{student_id}")
+def mastery_progress(student_id: int, db: Session = Depends(get_db)):
+    """SoP US6: each answer's mastery before/after in time order, so the
+    mastery map can draw a per-concept learning curve."""
+    attempts = (db.query(models.Attempt).filter_by(student_id=student_id)
+                .order_by(models.Attempt.timestamp, models.Attempt.id).all())
+    return [{"concept_id": a.concept_id, "p_mastery_before": a.p_mastery_before,
+             "p_mastery_after": a.p_mastery_after, "is_correct": a.is_correct,
+             "timestamp": a.timestamp.isoformat()} for a in attempts]
+
+
 @router.get("/history/{student_id}")
 def quiz_history(student_id: int, db: Session = Depends(get_db)):
     """Quiz history — supplementary; not one of the SoP's 8 core stories.
@@ -115,14 +135,13 @@ def quiz_history(student_id: int, db: Session = Depends(get_db)):
     # seen for a given key carries that session's most recent timestamp.
     sessions: dict[str, dict] = {}
     for a in attempts:
-        if a.quiz_id and a.quiz_id in quiz_titles:
-            key = f"quiz-{a.quiz_id}"
-            label = f"Quiz: {quiz_titles[a.quiz_id]}"
-        else:
-            key = a.timestamp.strftime("%Y-%m-%d")
-            label = key
-        session = sessions.setdefault(
-            key, {"date": label, "attempts": [], "correct": 0, "total": 0, "_sort_ts": a.timestamp})
+        day = a.timestamp.strftime("%Y-%m-%d")
+        quiz_title = quiz_titles.get(a.quiz_id) if a.quiz_id else None
+        key = f"{day}-quiz-{a.quiz_id}" if quiz_title else f"{day}-practice"
+        label = f"Quiz: {quiz_title} ({day})" if quiz_title else day
+        session = sessions.setdefault(key, {
+            "key": key, "date": label, "day": day, "quiz_title": quiz_title, "mode": a.mode,
+            "attempts": [], "correct": 0, "total": 0, "_sort_ts": a.timestamp})
         session["attempts"].append({
             "question_id": a.question_id,
             "concept": concept_names.get(a.concept_id, "Unknown"),

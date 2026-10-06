@@ -1,5 +1,6 @@
 import csv
 import io
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -23,6 +24,72 @@ def class_weak_concepts(subject: str, db: Session = Depends(get_db)):
         .all()
     )
     return [{"concept_id": r.id, "concept": r.name, "avg_mastery": float(r.avg_mastery)} for r in rows]
+
+
+@router.get("/overview")
+def class_overview(subject: str, db: Session = Depends(get_db)):
+    """Headline numbers for the teacher dashboard (supports SoP US7)."""
+    concept_ids = [c.id for c in db.query(models.Concept).filter_by(subject=subject).all()]
+    attempts = db.query(models.Attempt).filter(models.Attempt.concept_id.in_(concept_ids)).all()
+    masteries = db.query(models.Mastery).filter(models.Mastery.concept_id.in_(concept_ids)).all()
+    return {
+        "n_students": db.query(models.User).filter_by(role="student").count(),
+        "n_active_students": len({a.student_id for a in attempts}),
+        "n_attempts": len(attempts),
+        "accuracy": (sum(a.is_correct for a in attempts) / len(attempts)) if attempts else None,
+        "avg_mastery": (sum(m.p_mastery for m in masteries) / len(masteries)) if masteries else None,
+        "n_concepts": len(concept_ids),
+        "n_questions": db.query(models.Question).filter(models.Question.concept_id.in_(concept_ids)).count(),
+        "n_quizzes": db.query(models.Quiz).filter_by(subject=subject).count(),
+    }
+
+
+@router.get("/students")
+def student_roster(subject: str, db: Session = Depends(get_db)):
+    """Per-student progress for the teacher dashboard (supports SoP US7):
+    average mastery, answers, accuracy, weakest concept, last activity."""
+    concepts = {c.id: c.name for c in db.query(models.Concept).filter_by(subject=subject).all()}
+    roster = []
+    for s in db.query(models.User).filter_by(role="student").order_by(models.User.name).all():
+        masteries = [m for m in db.query(models.Mastery).filter_by(student_id=s.id).all() if m.concept_id in concepts]
+        attempts = [a for a in db.query(models.Attempt).filter_by(student_id=s.id).all() if a.concept_id in concepts]
+        weakest = min(masteries, key=lambda m: m.p_mastery) if masteries else None
+        roster.append({
+            "student_id": s.id,
+            "name": s.name,
+            "email": s.email,
+            "avg_mastery": (sum(m.p_mastery for m in masteries) / len(masteries)) if masteries else None,
+            "n_attempts": len(attempts),
+            "accuracy": (sum(a.is_correct for a in attempts) / len(attempts)) if attempts else None,
+            "weakest_concept": concepts[weakest.concept_id] if weakest else None,
+            "mastery_by_concept": {m.concept_id: m.p_mastery for m in masteries},
+            "last_active": max(a.timestamp for a in attempts).isoformat() if attempts else None,
+        })
+    return roster
+
+
+@router.get("/activity")
+def class_activity(subject: str, days: int = 14, db: Session = Depends(get_db)):
+    """Answers, accuracy and active students per day for the last `days`
+    days (supports SoP US7's teacher view)."""
+    concept_ids = [c.id for c in db.query(models.Concept).filter_by(subject=subject).all()]
+    today = datetime.utcnow().date()
+    start = today - timedelta(days=days - 1)
+    buckets = {start + timedelta(days=i): {"answers": 0, "correct": 0, "students": set()} for i in range(days)}
+    attempts = (db.query(models.Attempt)
+                .filter(models.Attempt.concept_id.in_(concept_ids),
+                        models.Attempt.timestamp >= datetime.combine(start, datetime.min.time()))
+                .all())
+    for a in attempts:
+        b = buckets.get(a.timestamp.date())
+        if b is None:
+            continue
+        b["answers"] += 1
+        b["correct"] += bool(a.is_correct)
+        b["students"].add(a.student_id)
+    return [{"day": d.isoformat(), "answers": b["answers"],
+             "accuracy": (b["correct"] / b["answers"]) if b["answers"] else None,
+             "active_students": len(b["students"])} for d, b in sorted(buckets.items())]
 
 
 @router.get("/adaptive-vs-random")
