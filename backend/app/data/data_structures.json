@@ -1,0 +1,206 @@
+{
+  "subject": "Data Structures",
+  "format": "Each question is [difficulty, text, correct answer, wrong 1, wrong 2, wrong 3]. The seed shuffles the four options deterministically, so the correct letter varies.",
+  "concepts": [
+    {
+      "name": "Arrays", "p_init": 0.3, "p_learn": 0.25, "p_slip": 0.1, "p_guess": 0.2,
+      "questions": [
+        ["easy", "What is the time complexity of accessing an element by index in an array?", "O(1)", "O(n)", "O(log n)", "O(n^2)"],
+        ["easy", "In a zero-indexed array of size n, what is the index of the last element?", "n - 1", "n", "n + 1", "1"],
+        ["easy", "How are the elements of an array stored in memory?", "In contiguous memory locations", "Scattered and linked by pointers", "As a balanced tree", "In a hash table"],
+        ["easy", "What is the time complexity of finding the maximum element in an unsorted array of n elements?", "O(n)", "O(1)", "O(log n)", "O(n log n)"],
+        ["easy", "What is the index of the first element in a zero-indexed array?", "0", "1", "-1", "n"],
+        ["medium", "Inserting a new element at the beginning of a full array of size n requires shifting how many elements in the worst case?", "n", "0", "1", "log n"],
+        ["medium", "Which of these is a key disadvantage of arrays compared to linked lists?", "Fixed or expensive-to-resize size", "Slow random access", "No index-based access", "Cannot store primitive values"],
+        ["medium", "What is the worst-case time complexity of binary search on a sorted array of n elements?", "O(log n)", "O(1)", "O(n)", "O(n log n)"],
+        ["medium", "An array starts at base address B and each element takes s bytes. What is the address of A[i] (zero-indexed)?", "B + i * s", "B + (i + 1) * s", "B * i + s", "B + s"],
+        ["medium", "What is the amortized cost of appending to a dynamic array that doubles its capacity when full?", "O(1)", "O(log n)", "O(n)", "O(n^2)"],
+        ["hard", "A 2D array with m rows and n columns is stored in row-major order (zero-indexed). What is the element offset of A[i][j]?", "i * n + j", "j * m + i", "i * m + j", "(i + j) * n"],
+        ["hard", "Using the two-pointer technique, checking whether a sorted array has a pair that sums to a target takes:", "O(n)", "O(n log n)", "O(n^2)", "O(log n)"],
+        ["hard", "Kadane's algorithm solves which problem?", "Maximum subarray sum in O(n)", "Sorting in O(n log n)", "Shortest path in O(V + E)", "Longest common subsequence in O(n^2)"],
+        ["hard", "How many swaps does an in-place reversal of an array of n elements perform?", "floor(n / 2)", "n", "n - 1", "n^2"],
+        ["hard", "Rotating an array of n elements by k positions with the reversal algorithm takes:", "O(n) time and O(1) extra space", "O(nk) time and O(n) extra space", "O(log n) time and O(1) extra space", "O(n^2) time and O(1) extra space"]
+      ]
+    },
+    {
+      "name": "Linked Lists", "p_init": 0.25, "p_learn": 0.2, "p_slip": 0.1, "p_guess": 0.2,
+      "questions": [
+        ["easy", "What is the time complexity of accessing the k-th element of a singly linked list?", "O(n)", "O(1)", "O(log n)", "O(n log n)"],
+        ["easy", "What does each node in a singly linked list typically contain?", "Data and a pointer to the next node", "Only data", "Two pointers and no data", "An index and a value"],
+        ["easy", "In a non-circular singly linked list, what does the last node's next pointer hold?", "NULL (None)", "The head node", "Itself", "The previous node"],
+        ["easy", "What is the time complexity of inserting a new node at the head of a singly linked list?", "O(1)", "O(log n)", "O(n)", "O(n^2)"],
+        ["easy", "What does a node of a doubly linked list contain?", "Data, a next pointer and a previous pointer", "Only a next pointer", "Two data fields", "An index and a next pointer"],
+        ["medium", "What is the main advantage of a linked list over an array for inserting at the front?", "O(1) insertion with no shifting", "Better cache locality", "Constant-time random access", "Lower memory use per element"],
+        ["medium", "With only a head pointer, deleting the last node of a singly linked list takes:", "O(n)", "O(1)", "O(log n)", "O(n log n)"],
+        ["medium", "In a circular singly linked list, the last node points to:", "The first node", "NULL", "The second node", "Itself"],
+        ["medium", "Which technique finds the middle node of a linked list in a single pass?", "Slow and fast pointers", "Binary search", "A stack of size one", "Sorting the list first"],
+        ["medium", "What is the worst-case time to search for a value in an unsorted linked list of n nodes?", "O(n)", "O(1)", "O(log n)", "O(n^2)"],
+        ["hard", "How does Floyd's cycle-detection algorithm work?", "Two pointers moving at different speeds, O(1) extra space", "A hash set of visited nodes, O(1) extra space", "Recursion, O(1) extra space", "Sorting the nodes, O(n log n) time"],
+        ["hard", "Reversing a singly linked list iteratively takes:", "O(n) time and O(1) extra space", "O(n^2) time and O(1) extra space", "O(n) time and O(n) extra space", "O(log n) time and O(1) extra space"],
+        ["hard", "What is the time complexity of merging two sorted linked lists of lengths m and n?", "O(m + n)", "O(m * n)", "O(log(m + n))", "O(max(m, n)^2)"],
+        ["hard", "Which sorting algorithm is generally preferred for sorting a linked list?", "Merge sort", "Quick sort with a random pivot", "Heap sort", "Binary insertion sort"],
+        ["hard", "Given only a pointer to a node (not the tail) of a singly linked list, how can it be deleted in O(1)?", "Copy the next node's data into it, then unlink the next node", "Traverse from the head to find its predecessor", "It cannot be done in any case", "Set the node's pointer to NULL"]
+      ]
+    },
+    {
+      "name": "Stacks", "p_init": 0.3, "p_learn": 0.25, "p_slip": 0.1, "p_guess": 0.25,
+      "questions": [
+        ["easy", "Which ordering principle does a stack follow?", "LIFO", "FIFO", "Random", "Priority-based"],
+        ["easy", "Which operation removes and returns the top element of a stack?", "pop", "enqueue", "dequeue", "peek"],
+        ["easy", "What is the time complexity of push and pop on an array-based stack?", "O(1)", "O(log n)", "O(n)", "O(n log n)"],
+        ["easy", "Which operation returns the top element without removing it?", "peek", "pop", "push", "enqueue"],
+        ["easy", "Trying to pop from an empty stack is called:", "Underflow", "Overflow", "Deadlock", "Collision"],
+        ["medium", "Which real-world use case is a classic application of a stack?", "Browser back button / undo history", "Print job scheduling", "Shortest path routing", "Task scheduling by priority"],
+        ["medium", "Checking whether parentheses in an expression are balanced typically uses a:", "Stack", "Queue", "Heap", "Hash table"],
+        ["medium", "Push 1, 2, 3 onto an empty stack, then pop twice. Which element is now on top?", "1", "2", "3", "The stack is empty"],
+        ["medium", "Function calls and returns in most programming languages are managed with a:", "Call stack", "Priority queue", "Circular queue", "Binary search tree"],
+        ["medium", "What is the value of the postfix expression 2 3 + 4 * ?", "20", "14", "24", "10"],
+        ["hard", "What is the postfix form of the infix expression A + B * C?", "A B C * +", "A B + C *", "+ A * B C", "A B C + *"],
+        ["hard", "A queue implemented with two stacks has what cost per operation?", "O(1) amortized", "O(log n) always", "O(n) for every operation", "O(n^2) amortized"],
+        ["hard", "Finding the next greater element for every element of an array with a monotonic stack takes:", "O(n)", "O(n log n)", "O(n^2)", "O(log n)"],
+        ["hard", "Push 1, 2, 3, 4, 5 in that order (pops allowed in between). Which pop sequence is impossible?", "3 1 2 4 5", "3 2 1 4 5", "1 2 3 4 5", "5 4 3 2 1"],
+        ["hard", "A min-stack that returns the minimum in O(1) is usually built with:", "An auxiliary stack tracking the current minimum", "Sorting the stack after every push", "A queue of all elements", "Binary search over the stack"]
+      ]
+    },
+    {
+      "name": "Queues", "p_init": 0.3, "p_learn": 0.25, "p_slip": 0.1, "p_guess": 0.25,
+      "questions": [
+        ["easy", "Which ordering principle does a queue follow?", "FIFO", "LIFO", "Random", "Depth-first"],
+        ["easy", "Which operation adds an element to the rear of a queue?", "enqueue", "push", "pop", "peek"],
+        ["easy", "Which operation removes the element at the front of a queue?", "dequeue", "push", "enqueue", "peek"],
+        ["easy", "Which of these is a real-world example of a queue?", "People waiting in line at a ticket counter", "A pile of plates", "An undo history", "A family tree"],
+        ["easy", "In a linked-list queue with head and tail pointers, enqueue and dequeue take:", "O(1)", "O(log n)", "O(n)", "O(n^2)"],
+        ["medium", "Which data structure is typically used to implement breadth-first search (BFS)?", "Queue", "Stack", "Heap", "Hash map"],
+        ["medium", "What is the main advantage of a circular queue over a simple array queue?", "It reuses slots freed at the front", "It sorts elements automatically", "It allows random access to any element", "It never becomes full"],
+        ["medium", "Which element does a priority queue remove first?", "The element with the highest priority", "The oldest element", "The newest element", "A random element"],
+        ["medium", "A deque (double-ended queue) allows:", "Insertion and deletion at both ends", "Insertion at both ends only", "Deletion at both ends only", "Access only by index"],
+        ["medium", "Enqueue 10, 20, 30, dequeue once, then enqueue 40. Which element is at the front?", "20", "10", "30", "40"],
+        ["hard", "In an array circular queue of size n where rear is the last filled slot and one slot is kept empty, the queue is full when:", "(rear + 1) % n == front", "rear == front", "rear == n - 1", "front == 0"],
+        ["hard", "Finding the maximum of every window of size k in O(n) uses a:", "Deque", "Min-heap only", "Stack of size k", "Sorted array"],
+        ["hard", "What is the most common efficient implementation of a priority queue?", "Binary heap: O(log n) insert and extract", "Sorted array: O(1) insert and extract", "Linked list: O(1) insert and O(1) extract-max", "Hash table: O(1) extract-max"],
+        ["hard", "For a queue built from two stacks, what is the cost of a single dequeue?", "O(n) worst case, O(1) amortized", "O(1) always", "O(log n) always", "O(n^2) worst case"],
+        ["hard", "Round-robin CPU scheduling is naturally implemented with a:", "Circular queue", "Stack", "Binary search tree", "Hash table"]
+      ]
+    },
+    {
+      "name": "Trees", "p_init": 0.2, "p_learn": 0.15, "p_slip": 0.15, "p_guess": 0.2,
+      "questions": [
+        ["easy", "What is the maximum number of children a node can have in a binary tree?", "2", "1", "3", "Unlimited"],
+        ["easy", "What is a node with no children called?", "Leaf", "Root", "Parent", "Sibling"],
+        ["easy", "What is the topmost node of a tree called?", "Root", "Leaf", "Edge", "Subtree"],
+        ["easy", "In a binary search tree, the values in a node's left subtree are:", "Smaller than the node", "Larger than the node", "Equal to the node", "Unordered"],
+        ["easy", "How many edges does a tree with n nodes have?", "n - 1", "n", "n + 1", "2n"],
+        ["medium", "What is the average time complexity of searching in a balanced binary search tree?", "O(log n)", "O(1)", "O(n)", "O(n^2)"],
+        ["medium", "Which traversal visits nodes in Left-Root-Right order?", "Inorder", "Preorder", "Postorder", "Level-order"],
+        ["medium", "An inorder traversal of a binary search tree visits the keys in:", "Sorted (ascending) order", "Reverse insertion order", "Level-by-level order", "Random order"],
+        ["medium", "What is the maximum number of nodes in a binary tree of height h (root at height 0)?", "2^(h+1) - 1", "2^h", "h^2", "2h + 1"],
+        ["medium", "Level-order traversal of a tree is usually implemented with a:", "Queue", "Stack", "Heap", "Hash table"],
+        ["hard", "What is the worst-case search time in an unbalanced binary search tree with n nodes?", "O(n)", "O(1)", "O(log n)", "O(n log n)"],
+        ["hard", "What property does an AVL tree maintain at every node?", "Left and right subtree heights differ by at most 1", "Left and right subtree heights are always equal", "Left and right subtree heights differ by at most 2", "No constraint on subtree heights"],
+        ["hard", "A binary tree has preorder A B D E C F and inorder D B E A F C. What is its postorder?", "D E B F C A", "D B E F C A", "E D B C F A", "D E F B C A"],
+        ["hard", "When deleting a node with two children from a binary search tree, it is usually replaced by:", "Its inorder successor (or predecessor)", "Its entire left subtree", "The root of the tree", "Any leaf node"],
+        ["hard", "What is the height of a complete binary tree with n nodes?", "Θ(log n)", "Θ(n)", "Θ(√n)", "Θ(1)"]
+      ]
+    },
+    {
+      "name": "Graphs", "p_init": 0.15, "p_learn": 0.15, "p_slip": 0.15, "p_guess": 0.2,
+      "questions": [
+        ["easy", "A graph consists of:", "Vertices and edges", "Only vertices", "Rows and columns", "Keys and values"],
+        ["easy", "In a directed graph, edges:", "Have a direction (u → v)", "Have no direction", "Always have weights", "Connect a vertex only to itself"],
+        ["easy", "Representing a graph with a V × V table of 0s and 1s is called an:", "Adjacency matrix", "Adjacency list", "Incidence list", "Edge heap"],
+        ["easy", "In an undirected graph, the degree of a vertex is:", "The number of edges incident to it", "The number of vertices in the graph", "Its distance from the root", "Its weight"],
+        ["easy", "A connected graph with no cycles is called a:", "Tree", "Forest", "DAG", "Clique"],
+        ["medium", "Which data structure is commonly used to implement depth-first search (DFS) iteratively?", "Stack", "Queue", "Heap", "Linked list"],
+        ["medium", "On an unweighted graph, BFS from a source finds:", "Shortest paths (fewest edges) from the source", "A minimum spanning tree", "A topological order", "Strongly connected components"],
+        ["medium", "What is the time complexity of BFS or DFS with an adjacency list?", "O(V + E)", "O(V)", "O(E log V)", "O(V^2)"],
+        ["medium", "How much space does an adjacency matrix take?", "O(V^2)", "O(V)", "O(E)", "O(V + E)"],
+        ["medium", "In an undirected graph, the sum of all vertex degrees equals:", "2E", "E", "V", "V + E"],
+        ["hard", "Which algorithm finds the shortest path in a weighted graph with non-negative edge weights?", "Dijkstra's algorithm", "Depth-first search", "Kruskal's algorithm", "Binary search"],
+        ["hard", "A topological sort is possible only for:", "Directed acyclic graphs (DAGs)", "Any undirected graph", "Graphs with negative cycles", "Complete graphs"],
+        ["hard", "Which algorithm handles negative edge weights and can detect negative cycles?", "Bellman-Ford", "Dijkstra", "Prim", "Kruskal"],
+        ["hard", "What does Kruskal's algorithm compute?", "A minimum spanning tree", "The shortest path between two vertices", "A topological order", "Strongly connected components"],
+        ["hard", "What is the time complexity of Dijkstra's algorithm with a binary heap?", "O((V + E) log V)", "O(V^2 E)", "O(V + E)", "O(E^2)"]
+      ]
+    },
+    {
+      "name": "Hashing", "p_init": 0.25, "p_learn": 0.2, "p_slip": 0.1, "p_guess": 0.25,
+      "questions": [
+        ["easy", "What does a hash function do in a hash table?", "Maps a key to an index in the table", "Maps an index back to a key", "Sorts the keys", "Links nodes together"],
+        ["easy", "What is the average-case time to look up a key in a hash table?", "O(1)", "O(log n)", "O(n)", "O(n log n)"],
+        ["easy", "When two different keys map to the same index, it is called a:", "Collision", "Overflow", "Underflow", "Recursion"],
+        ["easy", "Python's dict and Java's HashMap are implemented as:", "Hash tables", "Linked lists", "Binary heaps", "Stacks"],
+        ["easy", "Which task is a typical use of a hash table?", "Counting word frequencies", "Finding shortest paths", "Reversing a string", "Keeping undo history"],
+        ["medium", "How does separate chaining resolve collisions?", "Colliding keys are stored in a list at the same bucket", "A second hash function picks a new bucket", "The table is sorted after each insert", "The colliding key is discarded"],
+        ["medium", "In linear probing, after a collision the table:", "Checks the next slot, then the one after, and so on", "Uses a second hash function", "Stores the key in a linked list", "Resizes immediately"],
+        ["medium", "The load factor of a hash table is:", "Number of entries ÷ number of buckets", "Number of buckets ÷ number of entries", "Number of collisions ÷ number of entries", "Table size × number of entries"],
+        ["medium", "With chaining, what is the worst-case lookup time if all n keys hash to the same bucket?", "O(n)", "O(1)", "O(log n)", "O(n^2)"],
+        ["medium", "Checking an array of n elements for duplicates with a hash set takes:", "O(n) on average", "O(n log n)", "O(n^2)", "O(1)"],
+        ["hard", "Long runs of occupied slots that slow down linear probing are called:", "Primary clustering", "Secondary clustering", "Thrashing", "Fragmentation"],
+        ["hard", "With the division method h(k) = k mod m, why is m often chosen to be a prime?", "To spread keys more evenly across buckets", "To make the table smaller", "To keep keys sorted", "To avoid needing a hash function"],
+        ["hard", "In double hashing, the second hash function determines:", "The step size between probes", "The initial bucket", "When to resize the table", "The order of keys in a chain"],
+        ["hard", "Solving two-sum (find two numbers that add up to a target) with a hash map takes:", "O(n) on average", "O(n^2)", "O(n log n)", "O(log n)"],
+        ["hard", "If a hash table doubles its size whenever the load factor passes a threshold, inserts cost:", "O(1) amortized", "O(n) for every insert", "O(log n) amortized", "O(n^2) amortized"]
+      ]
+    },
+    {
+      "name": "Heaps", "p_init": 0.2, "p_learn": 0.2, "p_slip": 0.1, "p_guess": 0.25,
+      "questions": [
+        ["easy", "In a max-heap, what does the root hold?", "The largest element", "The smallest element", "The median", "The most recently inserted element"],
+        ["easy", "A binary heap is usually stored in:", "An array", "A hash table", "A doubly linked list", "A 2D matrix"],
+        ["easy", "What is the min-heap property?", "Every parent is less than or equal to its children", "Every parent is greater than or equal to its children", "Every left child is smaller than the right child", "All leaves are equal"],
+        ["easy", "How long does it take to read the minimum element of a min-heap?", "O(1)", "O(log n)", "O(n)", "O(n log n)"],
+        ["easy", "What shape does a binary heap always have?", "A complete binary tree", "A skewed tree", "A binary search tree", "A graph with cycles"],
+        ["medium", "What is the time complexity of inserting an element into a binary heap?", "O(log n)", "O(1)", "O(n)", "O(n log n)"],
+        ["medium", "What is the time complexity of removing the maximum from a max-heap?", "O(log n)", "O(1)", "O(n)", "O(n^2)"],
+        ["medium", "In a zero-indexed array heap, where are the children of the node at index i?", "2i + 1 and 2i + 2", "2i and 2i + 1", "i + 1 and i + 2", "i / 2 and i / 2 + 1"],
+        ["medium", "Building a heap from n unsorted elements with the bottom-up method takes:", "O(n)", "O(log n)", "O(n log n)", "O(n^2)"],
+        ["medium", "Heaps are most commonly used to implement:", "Priority queues", "Undo history", "Hash tables", "Adjacency matrices"],
+        ["hard", "What is the worst-case time complexity of heap sort?", "O(n log n)", "O(n)", "O(n^2)", "O(log n)"],
+        ["hard", "Finding the k largest of n elements with a min-heap of size k takes:", "O(n log k)", "O(k log n)", "O(n^2)", "O(nk)"],
+        ["hard", "Is heap sort a stable sorting algorithm?", "No, equal elements may change relative order", "Yes, always", "Only for integers", "Only when n is even"],
+        ["hard", "The max-heap [50, 30, 40, 10, 20] has its maximum removed. What does the array look like afterwards?", "[40, 30, 20, 10]", "[30, 40, 10, 20]", "[40, 20, 30, 10]", "[30, 20, 40, 10]"],
+        ["hard", "The running median of a stream of numbers is usually maintained with:", "A max-heap and a min-heap", "A single min-heap", "A sorted linked list", "A stack and a queue"]
+      ]
+    },
+    {
+      "name": "Sorting", "p_init": 0.3, "p_learn": 0.2, "p_slip": 0.1, "p_guess": 0.25,
+      "questions": [
+        ["easy", "What is the worst-case time complexity of bubble sort?", "O(n^2)", "O(n)", "O(n log n)", "O(log n)"],
+        ["easy", "Which algorithm repeatedly selects the smallest remaining element and moves it to the front?", "Selection sort", "Insertion sort", "Merge sort", "Quick sort"],
+        ["easy", "What is the best-case time of insertion sort on an already sorted array?", "O(n)", "O(1)", "O(n log n)", "O(n^2)"],
+        ["easy", "Which strategy does merge sort use?", "Divide and conquer", "Greedy", "Dynamic programming", "Backtracking"],
+        ["easy", "After sorting [5, 2, 9, 1] in ascending order, what is the first element?", "1", "2", "5", "9"],
+        ["medium", "What is the worst-case time complexity of merge sort?", "O(n log n)", "O(n)", "O(n^2)", "O(log n)"],
+        ["medium", "What is the worst-case time complexity of quick sort?", "O(n^2)", "O(n log n)", "O(n)", "O(log n)"],
+        ["medium", "A sorting algorithm is called stable if:", "Equal elements keep their original relative order", "It never uses extra memory", "It always runs in O(n log n)", "It works on any data type"],
+        ["medium", "How much extra space does merge sort on an array need?", "O(n)", "O(1)", "O(log n)", "O(n^2)"],
+        ["medium", "Which of these sorting algorithms is stable?", "Merge sort", "Quick sort", "Heap sort", "Selection sort"],
+        ["hard", "What is the lower bound on the worst case of any comparison-based sorting algorithm?", "Ω(n log n)", "Ω(n)", "Ω(log n)", "Ω(n^2)"],
+        ["hard", "Counting sort on n integers in the range 0 to k takes:", "O(n + k)", "O(n log n)", "O(nk)", "O(k log n)"],
+        ["hard", "Quick sort hits its worst case when:", "The pivot is always the smallest or largest element", "The pivot is always the median", "The array has all distinct elements", "The array has even length"],
+        ["hard", "Which algorithm is usually fastest on nearly sorted data?", "Insertion sort", "Selection sort", "Heap sort", "Quick sort with the first element as pivot"],
+        ["hard", "Radix sort on n numbers with d digits in base b takes:", "O(d(n + b))", "O(n log n)", "O(n^2)", "O(b log n)"]
+      ]
+    },
+    {
+      "name": "Recursion", "p_init": 0.25, "p_learn": 0.2, "p_slip": 0.1, "p_guess": 0.25,
+      "questions": [
+        ["easy", "A recursive function is one that:", "Calls itself", "Runs in a loop forever", "Uses only global variables", "Never returns a value"],
+        ["easy", "The condition that stops a recursive function from calling itself again is the:", "Base case", "Recursive case", "Loop guard", "Return type"],
+        ["easy", "What usually happens if a recursive function has no base case?", "Stack overflow from infinite recursion", "It returns 0", "It runs faster", "The compiler adds one automatically"],
+        ["easy", "What is factorial(4)?", "24", "12", "16", "120"],
+        ["easy", "Which data structure does the system use to manage recursive calls?", "The call stack", "A queue", "A heap", "A hash table"],
+        ["medium", "What is the time complexity of the naive recursive Fibonacci function?", "Exponential, O(2^n)", "O(n)", "O(log n)", "O(n^2)"],
+        ["medium", "How much stack space does a recursive factorial(n) use?", "O(n)", "O(1)", "O(log n)", "O(n^2)"],
+        ["medium", "What is memoization?", "Storing results of subproblems so they are not recomputed", "Converting recursion into a loop", "Removing the base case", "Sorting the inputs first"],
+        ["medium", "Which recurrence describes recursive binary search?", "T(n) = T(n/2) + O(1)", "T(n) = 2T(n/2) + O(n)", "T(n) = T(n - 1) + O(1)", "T(n) = 2T(n - 1) + 1"],
+        ["medium", "If f(0) = 0 and f(n) = n + f(n - 1), what is f(4)?", "10", "4", "16", "24"],
+        ["hard", "The recurrence T(n) = 2T(n/2) + O(n), as in merge sort, solves to:", "O(n log n)", "O(n)", "O(n^2)", "O(log n)"],
+        ["hard", "What is the minimum number of moves to solve the Tower of Hanoi with n disks?", "2^n - 1", "2n - 1", "n^2", "2^(n-1)"],
+        ["hard", "What makes a function tail-recursive?", "The recursive call is the last operation it performs", "It has two base cases", "It calls itself twice", "It never uses the call stack"],
+        ["hard", "The recurrence T(n) = 2T(n - 1) + 1 with T(0) = 0 grows as:", "O(2^n)", "O(n)", "O(n log n)", "O(n^2)"],
+        ["hard", "How many calls in total (including the first) does naive fib(5) make, with fib(0) and fib(1) as base cases?", "15", "5", "8", "25"]
+      ]
+    }
+  ]
+}

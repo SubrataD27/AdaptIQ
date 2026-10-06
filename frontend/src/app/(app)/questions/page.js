@@ -2,7 +2,7 @@
 // SoP US1 (Annandita): concept- and difficulty-tagged question bank.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Alert, Box, Button, Card, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Skeleton,
+  Alert, Box, Button, Card, Chip, Dialog, Pagination, ToggleButton, ToggleButtonGroup, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Skeleton,
   Snackbar, Stack, TextField, Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -12,6 +12,7 @@ import { ErrorAlert, PageHeader } from "@/components/ui";
 import { MONO } from "@/theme";
 
 const LETTERS = ["a", "b", "c", "d"];
+const PAGE_SIZE = 12;
 const DIFFICULTY_COLOR = { easy: "success", medium: "warning", hard: "error" };
 const EMPTY = { concept_id: "", text: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_option: "a", difficulty: "medium" };
 
@@ -84,6 +85,8 @@ export default function QuestionBankPage() {
   const [concepts, setConcepts] = useState([]);
   const [questions, setQuestions] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [level, setLevel] = useState("all");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState("");
@@ -102,15 +105,31 @@ export default function QuestionBankPage() {
 
   const conceptName = useMemo(() => Object.fromEntries(concepts.map((c) => [c.id, c.name])), [concepts]);
   const counts = useMemo(() => (questions || []).reduce((m, q) => ({ ...m, [q.concept_id]: (m[q.concept_id] || 0) + 1 }), {}), [questions]);
-  const shown = (questions || []).filter((q) => filter === "all" || q.concept_id === filter).slice().reverse();
+  const filtered = (questions || [])
+    .filter((q) => (filter === "all" || q.concept_id === filter) && (level === "all" || q.difficulty === level))
+    .slice().reverse();
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const shown = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => { setPage(1); }, [filter, level]);
 
   return (
     <>
       <PageHeader eyebrow={SUBJECT} title="Question bank"
-                  subtitle="Every question is tagged with a concept and a difficulty level, so AdaptIQ can track mastery per concept."
+                  subtitle={questions ? `${questions.length} questions across ${concepts.length} concepts · ${["easy", "medium", "hard"].map((d) => `${questions.filter((q) => q.difficulty === d).length} ${d}`).join(" · ")}. Adaptive quizzes pick the difficulty from each student's mastery.` : "Every question is tagged with a concept and a difficulty level."}
                   action={<Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setOpen(true)}>Add question</Button>} />
       <ErrorAlert error={error} />
 
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mb: 2, alignItems: { sm: "center" }, justifyContent: "space-between" }}>
+        <ToggleButtonGroup size="small" exclusive value={level} onChange={(_, v) => v && setLevel(v)} color="primary">
+          {["all", "easy", "medium", "hard"].map((d) => (
+            <ToggleButton key={d} value={d} sx={{ px: 1.5, textTransform: "capitalize" }}>{d === "all" ? "All levels" : d}</ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        <Typography variant="body2" color="text.secondary">
+          {filtered.length} question{filtered.length === 1 ? "" : "s"}{pages > 1 ? ` · page ${page} of ${pages}` : ""}
+        </Typography>
+      </Stack>
       <Stack direction="row" sx={{ mb: 3, flexWrap: "wrap", gap: 1 }}>
         <Chip label={`All · ${questions?.length ?? 0}`} onClick={() => setFilter("all")}
               color={filter === "all" ? "primary" : "default"} variant={filter === "all" ? "filled" : "outlined"} />
@@ -153,6 +172,13 @@ export default function QuestionBankPage() {
             </Grid>
           ))}
         </Grid>
+      )}
+
+      {pages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+          <Pagination count={pages} page={page} onChange={(_, v) => { setPage(v); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                      color="primary" shape="rounded" siblingCount={0} />
+        </Box>
       )}
 
       <AddQuestionDialog open={open} onClose={() => setOpen(false)} concepts={concepts}
