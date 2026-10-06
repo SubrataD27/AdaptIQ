@@ -84,7 +84,7 @@ free_port() {
 wait_for() {
   local url="$1" name="$2" log="$3"
   for _ in $(seq 1 60); do
-    if curl -s -o /dev/null "$url"; then return 0; fi
+    if curl -s -m 3 -o /dev/null "$url"; then return 0; fi
     sleep 1
   done
   die "$name didn't come up within 60s — check $log"
@@ -158,11 +158,14 @@ APP_URL="http://localhost:$FRONTEND_PORT"
 if [ -n "$ADAPTIQ_NO_BROWSER" ]; then
   :
 elif [ "$IS_WINDOWS" = true ]; then
-  cmd.exe /c start "" "$APP_URL" >/dev/null 2>&1 || true
+  # Not "cmd.exe /c start": Git Bash rewrites "/c" into a path and cmd then
+  # sits as an interactive shell, blocking the script. explorer.exe hands the
+  # URL to the default browser and returns immediately.
+  explorer.exe "$APP_URL" </dev/null >/dev/null 2>&1 &
 elif command -v open >/dev/null 2>&1; then
-  open "$APP_URL" >/dev/null 2>&1 || true
+  open "$APP_URL" </dev/null >/dev/null 2>&1 || true
 elif command -v xdg-open >/dev/null 2>&1; then
-  xdg-open "$APP_URL" >/dev/null 2>&1 || true
+  xdg-open "$APP_URL" </dev/null >/dev/null 2>&1 &
 fi
 
 cat <<EOF
