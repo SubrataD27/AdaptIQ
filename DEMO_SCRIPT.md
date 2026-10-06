@@ -19,9 +19,11 @@ the same state:
   `meera`, ... `.demo@adaptiq.test`); every password is `Demo1234!`. The
   sign-in page lists these with one-click **Sign in** buttons.
 - Each student has 3-4 quiz sessions over the last two weeks.
-- A published **"Live Demo Quiz"** covers all 6 concepts.
-- Class picture: Graphs and Trees below 60% (red); Arrays, Stacks, Queues and
-  Linked Lists above it.
+- **150 questions**: 10 concepts (Arrays … Recursion), each with 5 easy, 5 medium
+  and 5 hard.
+- A published **"Live Demo Quiz"** covers all 10 concepts.
+- Class picture: Trees, Graphs, Heaps, Recursion and Queues below 60% (red);
+  Arrays, Stacks, Hashing, Linked Lists and Sorting above it.
 
 Rehearse once, then run `./start.sh` again right before presenting.
 
@@ -38,13 +40,14 @@ Click **Sign in** next to *Demo Teacher*.
 - **Weak-concept report** (US7): average mastery per concept against the
   dashed 60% target. Graphs and Trees are the class's weak spots.
 - **Mastery by student and concept** heatmap: one row per student, lowest
-  average first, so the students who need help are at the top. "Karan is weak
-  almost everywhere; Vikram only on Trees and Graphs."
+  average first, so the students who need help are at the top. Read across
+  the top row to show *which* concepts that student needs help with, and the
+  bottom "Class average" row for the class as a whole.
 - **Class activity**: answers per day over the last two weeks.
 - **Publish quiz** (US2): opens a dialog; "Live Demo Quiz" is already
   published. Optionally publish one live.
-- **Question bank** (sidebar, US1): every question tagged with concept and
-  difficulty; filter by concept; **Add question** opens a form.
+- **Question bank** (sidebar, US1): 150 questions, each tagged with concept
+  and difficulty; filter by concept and by level; **Add question** opens a form.
 
 ## 3. Student — adaptive quiz, live (90 sec) — the centrepiece
 Log out (bottom of the sidebar), then **Sign in** as *Ananya Rao*.
@@ -53,13 +56,16 @@ Log out (bottom of the sidebar), then **Sign in** as *Ananya Rao*.
 - The right panel explains **why this concept** was chosen (US4): the one
   she has practised least, and among those the one she knows least. No
   concept repeats within a session.
+- It also explains **why this difficulty** — the second level of
+  adaptivity: below 40% mastery she gets an easy question, 40–70% medium,
+  70% or more hard.
 - Answer 3-4 questions. After each, the ring and the
   "X% → Y%" line show the BKT update live (US5).
-- Finish the quiz (6 questions): the summary shows the score and how mastery
-  moved on each concept.
+- The quiz has 10 questions (one per concept); finish it, or stop after a few.
+  The summary shows the score and how mastery moved on each concept.
 - For a clean "weakest first" story, register a brand-new student instead:
-  their first question is Graphs, the concept with the lowest starting
-  estimate.
+  their first question is an **easy** Graphs question — the concept with the
+  lowest starting estimate, at the level that matches it.
 
 ## 4. Mastery (30 sec)
 **Mastery** in the sidebar (US6):
@@ -73,8 +79,9 @@ Log back in as the teacher → **Research** (US8):
 - **Estimation error vs. questions answered**: 30 simulated students with a
   known true mastery, run through the app's own BKT engine, adaptive vs.
   random, from 6 to 60 questions.
-- Be upfront: adaptive is more accurate on short quizzes (6-12 questions);
-  random edges ahead on longer ones. The **Findings** card explains why
+- Result: adaptive is more accurate than random on short and medium quizzes
+  (12 and 30 questions, checked over 5 random seeds); at 60 questions it is a
+  draw. Be upfront about the draw: the **Findings** card explains why
   (simulated learners don't learn, while BKT assumes they do). That's a real
   limitation and future-work item, not a bug.
 - **Download CSV**: every logged answer, for Pandas/Matplotlib analysis per

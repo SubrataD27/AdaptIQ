@@ -86,16 +86,16 @@ See [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for the rehearsed review walkthrough.
 
 | Story | Owner | What it does |
 |---|---|---|
-| US1 | Annandita | Concept- and difficulty-tagged question bank page with filters and an "Add question" dialog |
+| US1 | Annandita | 150-question bank (10 concepts, easy/medium/hard), filterable by concept and level, with an "Add question" dialog |
 | US2 | Annandita | Teacher publishes a quiz over a chosen set of concepts; students pick it or practise the whole subject |
 | US3 | Annandita | JWT register/login for teachers and students, role-based redirect |
-| US4 | Subrata | Adaptive next-question selection (least-practised concept first, then weakest) + random baseline mode |
+| US4 | Subrata | Adaptive selection at two levels: which concept (least-practised, then weakest) and how hard (easy < 40% mastery, medium 40-70%, hard ≥ 70%) + random baseline mode |
 | US5 | Subrata | 4-parameter BKT mastery update on every answer (`backend/app/bkt.py`) |
 | US6 | Annandita | Per-student mastery profile, per-concept learning curves, revision suggestions (< 60% mastery) |
 | US7 | Subrata | Class overview: weak-concept report, student × concept mastery heatmap, class activity |
 | US8 | Subrata | Adaptive vs. random: simulated-learner error curve (6-60 questions), live-attempt stats, pilot-study CSV export |
 
-Supplementary: quiz history page, startup seeding (6 concepts / 18 questions),
+Supplementary: quiz history page, startup seeding (10 concepts / 150 questions, 50 per difficulty level),
 demo data generator. Roadmap and open items: [`EXECUTION_PLAN.md`](EXECUTION_PLAN.md).
 
 ## Useful commands (from `backend/`, venv active)
@@ -113,7 +113,8 @@ API docs: http://localhost:8000/docs while the backend is running.
 backend/app/
   main.py            FastAPI app, CORS, startup seeding
   bkt.py             BKT update + adaptive concept selection
-  seed.py            question bank (6 concepts, 18 questions)
+  seed.py            loads the question bank into the DB
+  data/data_structures.json  10 concepts x 15 questions (5 easy, 5 medium, 5 hard)
   demo_data.py       demo teacher, Live Demo Quiz, seeded class
   simulation.py      simulated-learner research comparison
   routers/           auth, questions, quiz, quizzes, concepts, analytics

@@ -32,14 +32,15 @@ width):
 
 ## Not built yet, required by the proposal's own scope
 
-- **Question bank is far short of scope.** Proposal scope says 8-12 concepts
-  and 150+ questions for the pilot subject. Currently 6 concepts / 18
-  questions. See Phase C.
+- **Question bank content review.** The bank now meets the proposal's scope
+  (10 concepts, 150 questions) — see Phase C — but the questions still need a
+  read-through by both team members before any real pilot.
 - **No hosted deployment.** Proposal mentions Render/Railway free tier.
   Currently local-only.
-- **Adaptive selection only partly beats random in simulation.** The
-  coverage rule (SCRUM-22) closed most of the gap, but random still wins at
-  the default 30-question budget. See "SCRUM-22 update" under Phase D.
+- **Adaptive vs. random on long quizzes is a draw in simulation.** Adaptive
+  wins at 12 and 30 questions; at 60 it is level. See the 10-concept re-run
+  under Phase D.
+- **BKT parameters are hand-set**, not yet fitted from pilot data (pyBKT).
 
 ## Phase B — Close US2: real Quiz entity — **done**
 
@@ -58,7 +59,7 @@ Not done as part of Phase B (out of the plan's original scope, worth
 flagging for later): no class/section targeting on a quiz, no way to
 deactivate/edit a published quiz once created, no quiz detail/edit page.
 
-## Phase C — Expand the question bank to scope
+## Phase C — Expand the question bank to scope — **done**
 
 1. Grow "Data Structures" from 6 to 8-12 concepts (candidates: Hashing,
    Sorting Algorithms, Recursion, Heaps).
@@ -70,6 +71,19 @@ deactivate/edit a published quiz once created, no quiz detail/edit page.
 **Content authoring is a research-integrity concern (bad questions distort
 the BKT parameters), so flag drafts back to the team for review rather than
 bulk-generating and seeding directly.**
+
+Built for Review 2: `backend/app/data/data_structures.json` — 10 concepts
+(Arrays, Linked Lists, Stacks, Queues, Trees, Graphs, Hashing, Heaps, Sorting,
+Recursion) x 15 questions, exactly 5 easy / 5 medium / 5 hard each, all
+standard textbook facts with every answer checked. `seed.py` loads the file
+and shuffles each question's options deterministically (seeded by the
+question text) so correct answers are spread across A-D. **Still to do:** a
+read-through by both team members before any real pilot, per the note above.
+
+Difficulty is now used: in adaptive mode `bkt.select_question` serves an
+easy question while the concept's mastery is below 40%, medium at 40-70%,
+hard at 70%+ (nearest level if one is exhausted, least-seen first). Random
+mode keeps choosing any question, so the research baseline stays random.
 
 ## Phase D — Research component: simulation + pilot tooling — **done**
 
@@ -120,6 +134,22 @@ mastery, while BKT's p_learn term assumes they learn after each answer, so
 repeated observations push estimates upward. A simulation where learners also
 learn (or fitted p_learn values from pilot data) is the next step before
 claiming adaptive wins.
+
+**Re-run on the 10-concept bank** (30 students, mean absolute error,
+adaptive vs. random):
+
+| Seed | 12 questions | 30 questions | 60 questions |
+|---|---|---|---|
+| 42 (Research page) | **0.216** vs 0.244 | **0.242** vs 0.253 | **0.268** vs 0.270 |
+| 1 | **0.209** vs 0.237 | **0.228** vs 0.248 | **0.268** vs 0.271 |
+| 7 | **0.226** vs 0.267 | **0.239** vs 0.242 | 0.296 vs **0.290** |
+| 123 | 0.231 vs 0.231 | **0.235** vs 0.254 | 0.284 vs **0.269** |
+| 2024 | **0.238** vs 0.250 | **0.245** vs 0.246 | 0.281 vs **0.267** |
+
+With more concepts, coverage-aware adaptive selection beats random at 30
+questions in all 5 seeds and at 12 in 4 (one tie); at 60 questions random is
+ahead in 3 of 5, so long quizzes are a draw. Against the original
+lowest-mastery-only rule (seed 42) the coverage rule cut error by 10-28%.
 
 ## Reference: Technology stack check against proposal
 
