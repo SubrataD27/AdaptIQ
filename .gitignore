@@ -7,3 +7,5 @@ dist/
 .env
 .vscode/
 *.log
+.next/
+next-env.d.ts

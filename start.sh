@@ -5,7 +5,8 @@
 #
 # Every run:
 #   1. picks a supported Python (3.10-3.13) and creates backend/venv if missing
-#   2. installs backend deps (requirements.txt) and frontend deps (if missing)
+#   2. installs backend deps (requirements.txt) and frontend deps (if needed),
+#      and builds the Next.js frontend when its sources changed
 #   3. stops any AdaptIQ servers already on :8000 / :5173
 #   4. DELETES backend/adaptiq.db and reseeds it (question bank + demo class),
 #      so the demo always starts from the same known state
@@ -91,7 +92,9 @@ wait_for() {
 
 echo "== AdaptIQ demo startup =="
 
-command -v npm >/dev/null 2>&1 || die "npm not found. Install Node.js 18+ from https://nodejs.org"
+command -v node >/dev/null 2>&1 || die "Node.js not found. Install Node.js 20 LTS or newer from https://nodejs.org"
+command -v npm >/dev/null 2>&1 || die "npm not found. Install Node.js 20 LTS or newer from https://nodejs.org"
+node -e 'const [a,b]=process.versions.node.split(".").map(Number); process.exit(a>20||(a===20&&b>=9)?0:1)'   || die "Node.js $(node --version) is too old — the Next.js frontend needs 20.9+. Install the LTS from https://nodejs.org"
 command -v curl >/dev/null 2>&1 || die "curl not found."
 
 # --- 1. Backend venv + deps ---
@@ -113,6 +116,13 @@ if [ ! -d "$FRONTEND_DIR/node_modules" ] || [ "$FRONTEND_DIR/package-lock.json" 
   (cd "$FRONTEND_DIR" && npm install --no-audit --no-fund)
 fi
 
+# Production build: much faster page loads than dev mode, so the demo feels instant.
+# Rebuilt only when frontend sources changed since the last build.
+if [ ! -f "$FRONTEND_DIR/.next/BUILD_ID" ] || [ -n "$(cd "$FRONTEND_DIR" && find src next.config.mjs package-lock.json -newer .next/BUILD_ID 2>/dev/null | head -1)" ]; then
+  say frontend "building the Next.js app (about a minute on first run)..."
+  (cd "$FRONTEND_DIR" && NEXT_TELEMETRY_DISABLED=1 node node_modules/next/dist/bin/next build > build.log 2>&1)     || die "frontend build failed — see frontend/build.log"
+fi
+
 # --- 3. Stop old servers (the backend holds the DB file open) ---
 free_port "$BACKEND_PORT"
 free_port "$FRONTEND_PORT"
@@ -127,8 +137,8 @@ say backend "starting on :$BACKEND_PORT (log: backend/uvicorn.log)"
 (cd "$BACKEND_DIR" && exec "$VPY" -m uvicorn app.main:app --port "$BACKEND_PORT" > uvicorn.log 2>&1) &
 BACKEND_PID=$!
 
-say frontend "starting on :$FRONTEND_PORT (log: frontend/vite.log)"
-(cd "$FRONTEND_DIR" && exec node node_modules/vite/bin/vite.js --port "$FRONTEND_PORT" --strictPort > vite.log 2>&1) &
+say frontend "starting on :$FRONTEND_PORT (log: frontend/next.log)"
+(cd "$FRONTEND_DIR" && NEXT_TELEMETRY_DISABLED=1 exec node node_modules/next/dist/bin/next start -p "$FRONTEND_PORT" > next.log 2>&1) &
 FRONTEND_PID=$!
 
 cleanup() {
@@ -142,7 +152,7 @@ cleanup() {
 trap cleanup INT TERM
 
 wait_for "http://localhost:$BACKEND_PORT/" "Backend" "backend/uvicorn.log"
-wait_for "http://localhost:$FRONTEND_PORT/" "Frontend" "frontend/vite.log"
+wait_for "http://localhost:$FRONTEND_PORT/" "Frontend" "frontend/next.log"
 
 APP_URL="http://localhost:$FRONTEND_PORT"
 if [ -n "$ADAPTIQ_NO_BROWSER" ]; then
