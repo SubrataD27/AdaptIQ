@@ -1,0 +1,22 @@
+# Render Blueprint for the AdaptIQ backend (FastAPI) on the free plan.
+# Render dashboard -> New -> Blueprint -> pick this repo.
+#
+# The free plan's disk is ephemeral and the service sleeps after ~15 min idle,
+# so every boot starts from a fresh SQLite DB that is reseeded with the demo
+# class -- the same known state ./start.sh gives you locally.
+services:
+  - type: web
+    name: adaptiq-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.demo_data && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_ORIGIN_REGEX
+        value: https://adaptiq[a-z0-9-]*\.vercel\.app

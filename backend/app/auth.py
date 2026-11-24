@@ -1,8 +1,10 @@
+import os
 from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 
-SECRET_KEY = "change-me-before-deploy"  # move to env var for real deployment
+# Hosted deployments set SECRET_KEY (render.yaml generates one); local dev falls back.
+SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-before-deploy")
 ALGORITHM = "HS256"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
